@@ -1,0 +1,11 @@
+# Build directories
+build/
+dist/
+
+# GCC C++20 Module Cache
+gcm.cache/
+
+# IDE / System files
+.vscode/
+.idea/
+.DS_Store

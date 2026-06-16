@@ -1,10 +1,10 @@
-#pragma once
+export module boxTypes;
 
-struct Cell {
+export struct Cell {
   char32_t glyph;
 };
 
-struct boxOutlineDetails {
+export struct boxOutlineDetails {
   char32_t horizontal;
   char32_t vertical;
   char32_t topLeft;
@@ -13,14 +13,14 @@ struct boxOutlineDetails {
   char32_t bottomRight;
 };
 
-struct bounds {
+export struct bounds {
   int x;
   int y;
   int height;
   int width;
 };
 
-namespace boxStyle {
+export namespace boxStyle {
 inline constexpr boxOutlineDetails light = {U'─', U'│', U'┌', U'┐', U'└', U'┘'};
 
 // Heavy / Thick line border

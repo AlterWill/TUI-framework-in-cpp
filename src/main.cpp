@@ -1,5 +1,5 @@
-#include "terminal.hpp"
-#include "tools.hpp"
+import terminal;
+import tools;
 
 int main() {
   terminal Frame;

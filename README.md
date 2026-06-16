@@ -476,3 +476,12 @@ State
 ```
 
 If the Node tree is generic enough, adding widgets, layouts, and styles later should not require rewriting the lexer or parser.
+
+# Configure the build directory using Ninja
+cmake -G Ninja -B build -S .
+
+# Build the executable
+cmake --build build
+
+# Run the executable
+./build/tui
