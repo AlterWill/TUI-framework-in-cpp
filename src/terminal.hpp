@@ -1,10 +1,10 @@
 #pragma once
-#include "tools.hpp"
-#include "types.hpp"
-#include <vector>
+#include "boxTypes.hpp"
+#include <string>
 #include <sys/ioctl.h>
+#include <vector>
 
-class terminal{
+class terminal {
 public:
   int row;
   int col;
@@ -12,9 +12,9 @@ public:
   std::vector<std::vector<Cell>> buffer;
   void measurements();
   void createScreen();
-  void drawUnicode(int x, int y, std::string text);
+  void drawUnicode(int x, int y, char32_t text);
   void drawChar(int x, int y, char text);
-  void drawBox(boxOutlineDetails characters,bounds location);
+  void drawBox(boxOutlineDetails characters, bounds location);
   void drawText(int x, int y, std::string text);
   void display();
   void clearBuffer();
