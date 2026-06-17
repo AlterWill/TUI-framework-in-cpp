@@ -1,9 +1,9 @@
 module;
-#include <string>
+#include <iostream>
 #include <vector>
+#include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <iostream>
 
 export module terminal;
 export import boxTypes;
@@ -14,7 +14,7 @@ export class terminal {
 public:
   int row;
   int col;
-  struct winsize w;
+  winsize w;
   std::vector<std::vector<Cell>> buffer;
 
   void measurements() {
@@ -89,8 +89,8 @@ public:
   }
 
   void drawText(int x, int y, std::string text) {
-    for (int i = x; i < x + text.length(); i++) {
-      drawChar(i, y, text[i - x]);
+    for (size_t i = 0; i < text.length(); i++) {
+      drawChar(x + static_cast<int>(i), y, text[i]);
     }
   }
 

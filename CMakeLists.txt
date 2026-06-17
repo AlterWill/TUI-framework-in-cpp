@@ -1,10 +1,17 @@
 cmake_minimum_required(VERSION 3.28)
+
+# Enforce Clang compiler for C++20 modules compatibility with clangd LSP
+set(CMAKE_CXX_COMPILER clang++)
+
 project(TUI LANGUAGES CXX)
 
 # Require C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Export compile_commands.json for LSP (clangd)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Define the executable target
 add_executable(tui)

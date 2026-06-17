@@ -477,11 +477,30 @@ State
 
 If the Node tree is generic enough, adding widgets, layouts, and styles later should not require rewriting the lexer or parser.
 
-# Configure the build directory using Ninja
-cmake -G Ninja -B build -S .
+## How to Build and Run
 
-# Build the executable
+Since this project uses C++20 modules, a modern generator like **Ninja** is required for CMake to scan module dependencies correctly.
+
+### 1. Clean (Optional)
+If you get a generator mismatch or cache error, run:
+```bash
+rm -rf build
+```
+
+### 2. Configure the Build
+Generate the build system using the Ninja generator and export compilation commands for the LSP (language server):
+```bash
+cmake -G Ninja -B build
+```
+
+### 3. Build the Project
+Compile the program:
+```bash
 cmake --build build
+```
 
-# Run the executable
+### 4. Run the Program
+Run the built TUI executable:
+```bash
 ./build/tui
+```

@@ -1,3 +1,5 @@
+module;
+
 export module boxTypes;
 
 export struct Cell {
