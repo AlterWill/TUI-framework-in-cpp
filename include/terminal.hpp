@@ -1,5 +1,5 @@
 #pragma once
-#include "boxTypes.hpp"
+#include "box.hpp"
 #include <string>
 #include <sys/ioctl.h>
 
@@ -14,7 +14,7 @@ public:
   void createScreen();
   void drawUnicode(int x, int y, char32_t text);
   void drawChar(int x, int y, char text);
-  void drawBox(boxOutlineDetails characters, bounds location);
+  void drawBox(boxOutlineDetails characters, Rect location);
   void drawText(int x, int y, std::string text);
   void display();
   void clearBuffer();

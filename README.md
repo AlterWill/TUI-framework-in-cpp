@@ -1,506 +1,256 @@
-# TUI Library Architecture Notes
+# TUI — Declarative React/JSX-Inspired Terminal UI Framework
 
-## Goal
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![C++ Standard](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support/20)
+[![CMake](https://img.shields.io/badge/CMake-3.28+-green.svg)](https://cmake.org/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-Build a React/JSX-inspired TUI library in C++ that:
-
-* Uses a JSX-like syntax
-* Parses files into a tree structure
-* Supports custom widgets
-* Supports multiple layout systems
-* Avoids major rewrites later
-* Separates parsing from rendering
+**TUI** is a modern, declarative, React/JSX-inspired terminal user interface (TUI) framework built from the ground up using C++20. It splits layout specification from component implementations by compiling JSX-like layout templates into a generic tree of component nodes, facilitating clean separation of concerns and high-performance, double-buffered rendering in the terminal.
 
 ---
 
-# High-Level Architecture
+## 🎯 Goals & Non-Goals
+
+### Goals
+* **Declarative Layouts**: Define terminal interfaces via clear, hierarchical JSX-like layout trees.
+* **Separation of Concerns**: Keep parser modules agnostic to specific widgets. The parser generates a generic node tree without knowing how a widget executes layout math or renders visually.
+* **Dynamic Widget Registration**: Add custom widgets to the runtime environment using a Widget Registry without modifying the parsing engine.
+* **Double-Buffered Rendering**: Track screen states to redraw only modified cells, reducing terminal flicker and optimizing performance.
+* **Modern C++ Architecture**: Leverage features of C++20 (including modules compatibility, standard library containers, and strong type safety).
+
+### Non-Goals
+* Not a web framework or GUI engine (does not compile to Web browsers, X11, Wayland, or desktop native windows).
+* Not a general-purpose HTML/XML validator.
+* Not an direct abstraction of complex Unix curses libraries (relies on raw ANSI escape sequences for maximum portability and compatibility).
+
+---
+
+## 🏛️ Architecture Overview
 
 ```text
-App.jsx
-    ↓
-Lexer
-    ↓
-Tokens
-    ↓
-Parser
-    ↓
-AST / Node Tree
-    ↓
-Widget Creation
-    ↓
-Layout Pass
-    ↓
-Render Pass
-    ↓
-Terminal Buffer
-    ↓
-Terminal
+       [ JSX layout template ]
+                  │
+                  ▼
+               [ Lexer ]  <─── (Tokenizes layout tags & attributes)
+                  │
+                  ▼
+              [ Parser ]  <─── (Recursive-descent syntactic analyzer)
+                  │
+                  ▼
+          [ AST / Node Tree ]
+                  │
+                  ▼
+         [ Widget Registry ]  <─── (Resolves & instantiates widgets)
+                  │
+                  ▼
+           [ Layout Pass ]    <─── (Computes absolute widget coordinates)
+                  │
+                  ▼
+           [ Render Pass ]    <─── (Recursive DFS rendering of node tree)
+                  │
+                  ▼
+         [ Double Buffer ]    <─── (Diffs previous vs current frame cells)
+                  │
+                  ▼
+          [ Standard Out ]    <─── (ANSI escape outputs to user terminal)
+```
+
+1. **Lexer & Parser**: The Lexer scans input layout syntax. The Parser uses a recursive-descent strategy to build a tree of generic `Node` objects containing tag names (e.g. `"Box"`, `"Text"`) and their attributes represented as a key-value attribute collection.
+2. **Widget Registry**: Converts generic parsed `Node` targets into runtime subclass representations of `Widget` (such as `Box` or `Text`) via an extensible dynamic lookup table.
+3. **Layout Engine**: Traverses the instantiated tree to compute sizing and positional coordinates (`Rect`) based on alignment properties and parent bounds.
+4. **Double Buffer Rendering**: A double buffer (`frameBuffer`) keeps track of current and previous frame cells. When rendering, only the diffed differences are flushed to stdout, resulting in highly responsive terminal interactions.
+
+---
+
+## 📐 Widget Hierarchy
+
+The framework provides an abstract `Widget` base class which represents any drawable component in the terminal grid layout:
+
+```mermaid
+classDiagram
+    class Widget {
+        <<Abstract>>
+        +Rect rect
+        +Widget* parent
+        +render(frameBuffer& fb)*
+    }
+    class Box {
+        +boxOutlineDetails outline
+        +render(frameBuffer& fb)
+    }
+    class Text {
+        +string text
+        +Sytle style
+        +Alignment alignment
+        +render(frameBuffer& fb)
+    }
+    Widget <|-- Box
+    Widget <|-- Text
 ```
 
 ---
 
-# Important Principle
+## 🚀 Hello World Example
 
-The parser should NOT know about:
-
-* Buttons
-* Text widgets
-* Layout algorithms
-* Rendering
-* Events
-
-The parser only builds a tree.
-
----
-
-# JSX Example
-
-Input:
-
-```jsx
-<Box layout="vertical">
-    <Text>Hello</Text>
-    <Button text="OK" />
-</Box>
-```
-
-Parser Output:
-
-```text
-Box
-├── Text
-│   └── Hello
-└── Button
-```
-
----
-
-# Lexer
-
-Purpose:
-
-Convert raw text into tokens.
-
-Example:
-
-```jsx
-<Button text="OK" />
-```
-
-Tokens:
-
-```text
-<
-Button
-text
-=
-"OK"
-/>
-```
-
-Lexer should:
-
-* Read characters
-* Create tokens
-* Ignore whitespace when appropriate
-
-Lexer does NOT understand UI structure.
-
----
-
-# Parser
-
-Purpose:
-
-Convert tokens into a tree.
-
-Input:
-
-```text
-Tokens
-```
-
-Output:
+Below is a simple programmatic example showcasing how to initialize the TUI terminal engine and draw widgets directly to the double buffer:
 
 ```cpp
-Node Tree
-```
+#include "terminal.hpp"
+#include "tools.hpp"
 
-The parser should use recursive descent.
+int main() {
+    // Instantiate terminal window manager
+    terminal term;
+    
+    // Hide terminal cursor for cleaner rendering output
+    tools::invisiableCursor();
 
-Example:
-
-```jsx
-<Box>
-    <Text>Hello</Text>
-</Box>
-```
-
-Produces:
-
-```text
-Box
-└── Text
-    └── Hello
-```
-
----
-
-# AST
-
-AST = Abstract Syntax Tree
-
-The AST is the output of the parser.
-
-For this project, the AST can also be the runtime UI tree.
-
-Example:
-
-```cpp
-struct Node {
-    ...
-};
-```
-
----
-
-# Recommended Node Structure
-
-```cpp
-struct Rect {
-    int x;
-    int y;
-    int width;
-    int height;
-};
-
-using Value = std::variant<
-    int,
-    float,
-    bool,
-    std::string
->;
-
-struct Prop {
-    std::string name;
-    Value value;
-};
-
-struct Node {
-    std::string type;
-
-    std::vector<Prop> props;
-
-    Rect rect;
-
-    Node* parent = nullptr;
-
-    std::vector<std::unique_ptr<Node>> children;
-};
-```
-
----
-
-# Why Props Exist
-
-Example:
-
-```jsx
-<Button text="OK" width="20" />
-```
-
-Props:
-
-```cpp
-{
-    {"text", "OK"},
-    {"width", 20}
+    for (;;) {
+        // Move terminal cursor back to top-left coordinate (0, 0)
+        tools::cursorHomePosition();
+        
+        // Measure current size of standard output terminal
+        term.measurements();
+        
+        // Allocate current and previous frame cell buffers
+        term.createScreen();
+        
+        // Draw layout elements
+        // Draw a thick outer border spanning the entire terminal size
+        term.drawBox(boxStyle::light, {0, 0, term.row, term.col});
+        
+        // Draw a heavy accent box container
+        term.drawBox(boxStyle::heavy, {1, 1, 10, 25});
+        
+        // Render simple text inside our accent box
+        term.drawText(2, 2, "Hello World");
+        
+        // Compare double buffers and write modifications to standard output
+        term.display();
+    }
+    return 0;
 }
 ```
 
-Props are simply attributes from tags.
-
 ---
 
-# Why Not Store Widget-Specific Structs In The Parser
+## ⚙️ Installation & Build Instructions
 
-Bad:
+### Prerequisites
+- A modern C++ compiler supporting C++20 (e.g., Clang 16+, GCC 13+).
+- **CMake** version 3.28 or later.
+- **Ninja** generator (highly recommended for processing C++ modules dependencies cleanly).
 
-```cpp
-ButtonProps
-TextProps
-InputProps
-```
+### Getting Started
 
-The parser would need to know every widget.
-
-Good:
-
-```cpp
-Node {
-    type = "Button"
-}
-```
-
-Widget code interprets props later.
-
----
-
-# unique_ptr
-
-Purpose:
-
-Automatic memory management.
-
-Example:
-
-```cpp
-std::unique_ptr<Node>
-```
-
-Benefits:
-
-* No manual delete
-* No memory leaks
-* Children are destroyed automatically
-
-Perfect for trees.
-
----
-
-# Layout System
-
-Recommended:
-
-```jsx
-<Box layout="vertical">
-```
-
-instead of:
-
-```jsx
-<VBox>
-```
-
-because it reduces special cases.
-
----
-
-Supported Layout Types
-
-```text
-vertical
-horizontal
-grid
-```
-
-Example:
-
-```jsx
-<Box layout="vertical">
-```
-
-```jsx
-<Box layout="horizontal">
-```
-
-```jsx
-<Box layout="grid">
-```
-
----
-
-# Layout Pass
-
-Input:
-
-```text
-Node Tree
-```
-
-Output:
-
-```text
-Node Tree + Rectangles
-```
-
-Example:
-
-```cpp
-Sidebar.rect = {0,0,30,40};
-Main.rect    = {30,0,70,40};
-```
-
-The layout pass computes sizes and positions.
-
----
-
-# Render Pass
-
-Input:
-
-```text
-Node Tree with Rects
-```
-
-Output:
-
-```text
-Terminal Buffer
-```
-
-Rendering is usually DFS:
-
-```cpp
-render(root);
-```
-
----
-
-# Widget Registry
-
-Do NOT use giant if statements.
-
-Bad:
-
-```cpp
-if(type == "Button")
-```
-
-Good:
-
-```cpp
-registry["Button"] = createButton;
-registry["Text"] = createText;
-```
-
-This allows adding widgets without touching parser code.
-
----
-
-# Future Features To Leave Room For
-
-Likely additions:
-
-```text
-focus
-events
-padding
-margin
-styles
-visibility
-min/max sizes
-ids
-classes
-themes
-```
-
-Store these as props.
-
-Do not hardcode them into the parser.
-
----
-
-# Development Order
-
-Phase 1
-
-* Node structure
-* Rect structure
-* Props system
-
-Phase 2
-
-* Lexer
-
-Phase 3
-
-* Parser
-
-Phase 4
-
-* Print AST for debugging
-
-Example:
-
-```text
-Box
-├── Text
-└── Button
-```
-
-Phase 5
-
-* Layout engine
-
-Phase 6
-
-* Terminal renderer
-
-Phase 7
-
-* Widget registry
-
-Phase 8
-
-* Keyboard input
-
-Phase 9
-
-* Focus system
-
-Phase 10
-
-* State management
-
----
-
-# Core Rule
-
-Keep these stable:
-
-```text
-Lexer
-Parser
-Node Tree
-```
-
-Most future changes should happen in:
-
-```text
-Widgets
-Layouts
-Rendering
-Events
-State
-```
-
-If the Node tree is generic enough, adding widgets, layouts, and styles later should not require rewriting the lexer or parser.
-
-## How to Build and Run
-
-Since this project uses C++20 modules, a modern generator like **Ninja** is required for CMake to scan module dependencies correctly.
-
-### 1. Clean (Optional)
-If you get a generator mismatch or cache error, run:
 ```bash
+# Clone the repository
+git clone https://github.com/AlterWill/TUI.git
+cd TUI
+
+# Clean any existing build artifacts
 rm -rf build
-```
 
-### 2. Configure the Build
-Generate the build system using the Ninja generator and export compilation commands for the LSP (language server):
-```bash
+# Configure using CMake with the Ninja generator
 cmake -G Ninja -B build
-```
 
-### 3. Build the Project
-Compile the program:
-```bash
+# Build the executable
 cmake --build build
-```
 
-### 4. Run the Program
-Run the built TUI executable:
-```bash
+# Run the program
 ./build/tui
 ```
+
+---
+
+## 🗺️ Roadmap
+
+The project is structured in 10 progressive phases of development:
+
+### Phase 1: Core Foundation
+- [x] Basic programmatic Widget tree hierarchy setup
+- [x] Double-buffered `frameBuffer` configuration
+- [x] Character and text draw pipeline (`Text::render`)
+- [x] Outlined box drawing system (`Box::render`)
+- [ ] Element visual Padding calculation
+- [ ] Element Margin boundaries support
+- [ ] Styled text properties (bold, italic, underlines)
+- [ ] Row flow layout manager
+- [ ] Column flow layout manager
+
+### Phase 2: Text System
+- [x] Word wrapping paragraph helper functions
+- [x] Text alignments (left, right, center alignment)
+- [ ] Rich markup parsing logic (colored spans, embedded styles)
+- [ ] Paragraph widget container holding block-wrapped text
+
+### Phase 3: Interactive Widgets
+- [ ] Button widget with active highlight states
+- [ ] Checkbox widget toggle selectors
+- [ ] Radio button group selectors
+- [ ] Toggle switch widget
+
+### Phase 4: Input
+- [ ] Non-blocking terminal keyboard event loops
+- [ ] Focus management system (moving cursor selection through inputs)
+- [ ] TextInput widget for inline editing
+- [ ] PasswordInput widget masking user characters
+- [ ] TextArea widget for multi-line textual editors
+
+### Phase 5: Layout
+- [ ] Flex layouts (mimicking CSS flexbox styles)
+- [ ] Grid layout structures
+- [ ] Scrollable window containers
+
+### Phase 6: Data Widgets
+- [ ] Dynamic lists (lists of selectable items with scroll tracking)
+- [ ] Data tables supporting horizontal columns and alignments
+- [ ] Tree view expansion/contraction structures
+
+### Phase 7: Terminal Features
+- [ ] Terminal mouse support (click, scroll, select events)
+- [x] Wide Unicode character support (UTF-8, UTF-32 conversion)
+- [ ] Terminal window resize signal handling
+- [x] Standard 16-color ANSI output styling
+
+### Phase 8: Advanced Widgets
+- [ ] Multi-tab views
+- [ ] Dropdown popup menus
+- [ ] Modal dialog boxes
+- [ ] Transient popup notifications
+- [ ] Loading progress bars
+
+### Phase 9: Rendering Optimizations
+- [ ] Dirty rectangle tracking (rendering only bounding boxes that changed)
+- [ ] Virtual DOM representation of component state
+- [ ] Render tree diffing algorithm
+
+### Phase 10: Ecosystem
+- [ ] Styled configuration theme files (JSON or YAML format)
+- [ ] Markdown terminal renderer
+- [ ] Code syntax highlighting widget
+- [ ] Declarative JSON configuration loading
+- [ ] C++ Declarative UI DSL
+
+---
+
+## 🔮 Future Ideas
+* **Hot Module Reloading (HMR)**: Automatically update layout styles in runtime by editing layout JSX configs without rebuilding binary files.
+* **WebAssembly Terminal Target**: Compile using Emscripten to run terminal UI components directly in browser applications.
+* **CSS-Style Selectors**: Assign stylesheets externally to configure widget styling rules using target class names or ID tags.
+
+---
+
+## 🤝 Contribution Guidelines
+
+We welcome contributions! Please follow these guidelines:
+1. Fork this repository and create your feature branch: `git checkout -b feature/cool-feature`
+2. Follow modern C++20 standard conventions and ensure formatting rules compile nicely.
+3. Keep code clean and lint-free by using the configuration defined in our [.clangd](.clangd) files.
+4. Open a pull request explaining your changes and reference relevant issues.
+
+---
+
+## 📄 License
+
+This project is licensed under the terms of the [MIT License](LICENSE).

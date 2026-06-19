@@ -42,7 +42,7 @@ void terminal::drawChar(int x, int y, char text) {
   buffer[y][x].glyph = text;
 }
 
-void terminal::drawBox(boxOutlineDetails characters, bounds location) {
+void terminal::drawBox(boxOutlineDetails characters, Rect location) {
   if (this->row == 0 || this->col == 0) {
     tools::clearScreen();
     std::cout << "Failed";
