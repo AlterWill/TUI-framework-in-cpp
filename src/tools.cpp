@@ -1,12 +1,9 @@
-module;
+#include "tools.hpp"
 #include <iostream>
-#include <string>
 
-export module tools;
+const std::string ESC = "\x1b";
 
-export const std::string ESC = "\x1b";
-
-export namespace tools {
+namespace tools {
   void visiableCursor() { std::cout << ESC << "[?25h"; }
   void invisiableCursor() { std::cout << ESC << "[?25l"; }
   void cursorHomePosition() { std::cout << ESC << "[H"; }

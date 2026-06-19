@@ -16,22 +16,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Define the executable target
 add_executable(tui)
 
-# Add sources and specify C++20 modules using FILE_SET CXX_MODULES
+# Add sources
 target_sources(tui
   PRIVATE
     src/main.cpp
     src/lexer.cpp
     src/parser.cpp
     src/ast.cpp
-  PUBLIC
-    FILE_SET CXX_MODULES
-    BASE_DIRS src
-    FILES
-      src/boxTypes.cppm
-      src/tools.cppm
-      src/unicode.cppm
-      src/terminal.cppm
+    src/tools.cpp
+    src/unicode.cpp
+    src/terminal.cpp
 )
+
+# Add header search path
+target_include_directories(tui PRIVATE include)
 
 # Set common compiler warnings and optimization levels
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

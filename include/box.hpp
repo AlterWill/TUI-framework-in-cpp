@@ -1,12 +1,9 @@
-module;
+#pragma once
 
-export module boxTypes;
+#include "frameBuffer.hpp"
+#include "node.hpp"
 
-export struct Cell {
-  char32_t glyph;
-};
-
-export struct boxOutlineDetails {
+struct boxOutlineDetails {
   char32_t horizontal;
   char32_t vertical;
   char32_t topLeft;
@@ -15,14 +12,7 @@ export struct boxOutlineDetails {
   char32_t bottomRight;
 };
 
-export struct bounds {
-  int x;
-  int y;
-  int height;
-  int width;
-};
-
-export namespace boxStyle {
+namespace boxStyle {
 inline constexpr boxOutlineDetails light = {U'─', U'│', U'┌', U'┐', U'└', U'┘'};
 
 // Heavy / Thick line border
@@ -46,3 +36,15 @@ inline constexpr boxOutlineDetails block = {U'█', U'█', U'█', U'█', U'�
 // Standard ASCII fallback
 inline constexpr boxOutlineDetails ascii = {U'-', U'|', U'+', U'+', U'+', U'+'};
 } // namespace boxStyle
+
+class Box : public Widget {
+  boxOutlineDetails boxOutlineDetails;
+
+  void render(frameBuffer &fb) override {
+    fb.setGlyph(rect.x, rect.y, boxOutlineDetails.topLeft);
+    fb.setGlyph(rect.x + rect.width, rect.y, boxOutlineDetails.bottomLeft);
+    fb.setGlyph(rect.x, rect.y + rect.height, boxOutlineDetails.topLeft);
+    fb.setGlyph(rect.x + rect.width, rect.y + rect.height,
+                boxOutlineDetails.topLeft);
+  }
+};

@@ -1,9 +1,6 @@
-module;
-#include <string>
+#include "unicode.hpp"
 
-export module unicode;
-
-export namespace unicode {
+namespace unicode {
 
 std::string toUtf8(char32_t cp) {
   std::string result;
