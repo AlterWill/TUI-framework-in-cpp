@@ -2,7 +2,6 @@
 #include "boxTypes.hpp"
 #include <string>
 #include <sys/ioctl.h>
-#include <vector>
 
 class terminal {
 public:
