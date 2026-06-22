@@ -83,7 +83,7 @@ public:
   void display() {
     for (int i = 0; i < row; i++) {
       for (int j = 0; j < col; j++) {
-        displayOutput += unicode::toUtf8(buffer[i * row + col].glyph);
+        displayOutput += unicode::toUtf8(buffer[i * col + j].glyph);
       }
     }
   }

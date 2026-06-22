@@ -52,9 +52,9 @@ public:
       fb.setGlyph(x, rect.y, outline.horizontal);
       fb.setGlyph(x, bottom, outline.horizontal);
     }
-    for (int y = rect.y + 1; y < right; y++) {
-      fb.setGlyph(rect.x, y, outline.horizontal);
-      fb.setGlyph(right, y, outline.horizontal);
+    for (int y = rect.y + 1; y < bottom; y++) {
+      fb.setGlyph(rect.x, y, outline.vertical);
+      fb.setGlyph(right, y, outline.vertical);
     }
   }
 };
