@@ -1,32 +1,33 @@
 #pragma once
 
-#include "widget.hpp"
-#include <algorithm>
 #include <memory>
 #include <vector>
 
-enum class LayoutType { Grid, Row, Column };
+#include "widget.hpp"
+
+enum class LayoutType { Row, Column, Grid };
 
 class Container : public Widget {
-public:
-  LayoutType layoutType;
+ public:
   std::vector<std::unique_ptr<Widget>> children;
+  Widget* parent = nullptr;
 
-  void render(frameBuffer &fb) override;
+  void render(frameBuffer& fb) override;
 
   void addChild(std::unique_ptr<Widget> widget) {
     children.push_back(std::move(widget));
   }
 
-  void removeChild(std::unique_ptr<Widget> widget) {
-    auto index = std::find(children.begin(), children.end(), widget);
-
-    if (index != children.end()) {
-      children.erase(index);
+  void removeChild(size_t index) {
+    if (index < children.size()) {
+      children.erase(children.begin() + index);
     }
   }
 
   void clearChildren() {
     children.clear();
+  }
+
+  virtual void setRectForChildren() {
   }
 };

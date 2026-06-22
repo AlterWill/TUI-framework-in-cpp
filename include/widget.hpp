@@ -2,16 +2,16 @@
 
 #include "frameBuffer.hpp"
 struct Rect {
-  int x;
-  int y;
-  int height;
-  int width;
+  int x = 0;
+  int y = 0;
+  int height = 0;
+  int width = 0;
 };
 
 class Widget {
-public:
+ public:
   Rect rect;
-  Widget *parent = nullptr;
+  Widget* parent = nullptr;
 
   void setRect(int x, int y, int height, int width) {
     rect.x = x;
@@ -20,7 +20,8 @@ public:
     rect.width = width;
   }
 
-  virtual void render(frameBuffer &fb) = 0;
+  virtual void render(frameBuffer& fb) = 0;
 
-  virtual ~Widget() {}
+  virtual ~Widget() {
+  }
 };

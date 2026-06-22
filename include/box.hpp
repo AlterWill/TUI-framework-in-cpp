@@ -1,7 +1,7 @@
 #pragma once
 
+#include "container.hpp"
 #include "frameBuffer.hpp"
-#include "node.hpp"
 
 struct boxOutlineDetails {
   char32_t horizontal;
@@ -26,27 +26,32 @@ inline constexpr boxOutlineDetails dashed = {U'╌', U'╎', U'┌', U'┐', U'�
 inline constexpr boxOutlineDetails block = {U'█', U'█', U'█', U'█', U'█', U'█'};
 // Standard ASCII fallback
 inline constexpr boxOutlineDetails ascii = {U'-', U'|', U'+', U'+', U'+', U'+'};
-} // namespace boxStyle
+}  // namespace boxStyle
 
 class Box : public Widget {
-public:
+ public:
   boxOutlineDetails outline;
+  std::unique_ptr<Container> layoutType;
 
-  Box(Rect r, boxOutlineDetails o = boxStyle::light) {
-    rect = r;
-    outline = o;
+  Box(std::unique_ptr<Container> main,
+      std::vector<std::unique_ptr<Widget>> ContainerChildren,
+      boxOutlineDetails o = boxStyle::light)
+      : outline(o), layoutType(std::move(main)) {
+    if (layoutType) {
+      layoutType->children = std::move(ContainerChildren);
+    }
   }
 
-  void render(frameBuffer &fb) override {
-    if (rect.width <= 0 || rect.height <= 0) {
+  void drawBorder(frameBuffer& fb) {
+    if (rect.width < 2 || rect.height < 2) {
       return;
     }
     int right = rect.x + rect.width - 1;
     int bottom = rect.y + rect.height - 1;
     fb.setGlyph(rect.x, rect.y, outline.topLeft);
-    fb.setGlyph(right, rect.y, outline.bottomLeft);
-    fb.setGlyph(rect.x, bottom, outline.topLeft);
-    fb.setGlyph(right, bottom, outline.topLeft);
+    fb.setGlyph(right, rect.y, outline.topRight);
+    fb.setGlyph(rect.x, bottom, outline.bottomLeft);
+    fb.setGlyph(right, bottom, outline.bottomRight);
 
     for (int x = rect.x + 1; x < right; x++) {
       fb.setGlyph(x, rect.y, outline.horizontal);
@@ -55,6 +60,15 @@ public:
     for (int y = rect.y + 1; y < bottom; y++) {
       fb.setGlyph(rect.x, y, outline.vertical);
       fb.setGlyph(right, y, outline.vertical);
+    }
+  }
+
+  void render(frameBuffer& fb) {
+    drawBorder(fb);
+    if (layoutType) {
+      for (auto& child : layoutType->children) {
+        child->render(fb);
+      }
     }
   }
 };

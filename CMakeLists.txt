@@ -25,7 +25,6 @@ target_sources(tui
     src/ast.cpp
     src/tools.cpp
     src/unicode.cpp
-    src/terminal.cpp
 )
 
 # Add header search path

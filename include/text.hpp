@@ -1,10 +1,11 @@
 #pragma once
 
-#include "frameBuffer.hpp"
-#include "node.hpp"
-#include "splitParagraphs.hpp"
 #include <string>
 #include <vector>
+
+#include "frameBuffer.hpp"
+#include "splitParagraphs.hpp"
+#include "widget.hpp"
 
 enum class Alignment {
   left,
@@ -13,7 +14,7 @@ enum class Alignment {
 };
 
 class Text : public Widget {
-public:
+ public:
   std::string text;
   Sytle style;
   Alignment alignment;
@@ -25,11 +26,11 @@ public:
     alignment = a;
   }
 
-  void render(frameBuffer &fb) override {
+  void render(frameBuffer& fb) override {
     std::vector<std::string> lines = convertStringToParagraph(text, rect.width);
 
     for (int i = 0; i < rect.height && i < static_cast<int>(lines.size()); i++) {
-      const std::string &line = lines[i];
+      const std::string& line = lines[i];
       int lineLen = line.length();
 
       int xOffset = rect.x;

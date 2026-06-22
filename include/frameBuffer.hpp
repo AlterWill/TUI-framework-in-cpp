@@ -1,11 +1,13 @@
 #pragma once
 
-#include "unicode.hpp"
-#include <cstdint>
-#include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
+
+#include <cstdint>
+#include <string>
 #include <vector>
+
+#include "unicode.hpp"
 
 enum class AnsiColor : uint8_t {
   Black = 0,
@@ -45,9 +47,9 @@ class frameBuffer {
   winsize w;
   std::vector<Cell> buffer;
   std::vector<Cell> previousFrame;
-  std::string displayOutput;
 
-public:
+ public:
+  std::string displayOutput;
   frameBuffer() {
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     row = w.ws_row;
@@ -76,15 +78,17 @@ public:
     buffer[y * col + x].sytle.bg = bg;
   }
 
-  void setCell(int x, int y, const Cell &NewCell) {
+  void setCell(int x, int y, const Cell& NewCell) {
     buffer[y * col + x] = NewCell;
   }
 
   void display() {
+    displayOutput.clear();
     for (int i = 0; i < row; i++) {
       for (int j = 0; j < col; j++) {
         displayOutput += unicode::toUtf8(buffer[i * col + j].glyph);
       }
+      displayOutput += '\n';
     }
   }
 };
