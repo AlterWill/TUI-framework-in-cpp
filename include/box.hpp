@@ -12,24 +12,21 @@ struct boxOutlineDetails {
   char32_t bottomRight;
 };
 
+// clang-format off
 namespace boxStyle {
+//            horizontal; vertical; topLeft; topRight; bottomLeft; bottomRight;
 inline constexpr boxOutlineDetails light = {U'─', U'│', U'┌', U'┐', U'└', U'┘'};
-// Heavy / Thick line border
 inline constexpr boxOutlineDetails heavy = {U'━', U'┃', U'┏', U'┓', U'┗', U'┛'};
-// Double line border
 inline constexpr boxOutlineDetails doubleBorder = {U'═', U'║', U'╔', U'╗', U'╚', U'╝'};
-// Light line border with rounded corners
 inline constexpr boxOutlineDetails rounded = {U'─', U'│', U'╭', U'╮', U'╰', U'╯'};
-// Light dashed border
 inline constexpr boxOutlineDetails dashed = {U'╌', U'╎', U'┌', U'┐', U'└', U'┘'};
-// Solid block border
 inline constexpr boxOutlineDetails block = {U'█', U'█', U'█', U'█', U'█', U'█'};
-// Standard ASCII fallback
 inline constexpr boxOutlineDetails ascii = {U'-', U'|', U'+', U'+', U'+', U'+'};
-}  // namespace boxStyle
+}
+// clang-format on
 
 class Box : public Widget {
- public:
+public:
   boxOutlineDetails outline;
   std::unique_ptr<Container> layoutType;
 
@@ -42,7 +39,7 @@ class Box : public Widget {
     }
   }
 
-  void drawBorder(frameBuffer& fb) {
+  void drawBorder(frameBuffer &fb) {
     if (rect.width < 2 || rect.height < 2) {
       return;
     }
@@ -63,10 +60,13 @@ class Box : public Widget {
     }
   }
 
-  void render(frameBuffer& fb) {
+  void render(frameBuffer &fb) {
     drawBorder(fb);
     if (layoutType) {
-      for (auto& child : layoutType->children) {
+      layoutType->setRect(rect.x + 1, rect.y + 1, rect.height - 2,
+                          rect.width - 2);
+      layoutType->setRectForChildren();
+      for (auto &child : layoutType->children) {
         child->render(fb);
       }
     }

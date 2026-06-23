@@ -4,34 +4,38 @@
 
 #include "container.hpp"
 class WidgetTree {
- public:
-  std::unique_ptr<Container> root;
+public:
+  std::unique_ptr<Widget> root;
+  Rect rect;
   frameBuffer fb;
 
-  WidgetTree(std::unique_ptr<Container> rootContainer) : root(std::move(rootContainer)) {
-  }
-
-  void dfs() {
-    if (!root) throw std::runtime_error("Root is null");
-    if (root->children.size() == 0) throw std::runtime_error("The root should have widget to render");
-
-    dfsHelper(*root);
+  WidgetTree(std::unique_ptr<Widget> rootContainer)
+      : root(std::move(rootContainer)) {
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = fb.col;
+    rect.height = fb.row;
   }
 
   void display() {
     fb.display();
-    std::cout << fb.displayOutput << std::endl;
+    std::cout << fb.displayOutput << std::flush;
   }
 
- private:
-  void dfsHelper(Container& container) {
-    for (auto& child : container.children) {
-      child->parent = &container;
-      if (auto* childContainer = dynamic_cast<Container*>(child.get())) {
-        dfsHelper(*childContainer);
-      } else {
-        child->render(fb);
-      }
+  void setRoot(std::unique_ptr<Widget> r) { root = std::move(r); }
+
+  void render() {
+    if (!root) {
+      return;
     }
-  };
+    root->render(fb);
+  }
+
+  void layout(const Rect &r) {
+    if (!root) {
+      return;
+    }
+    root->setRect(r.x, r.y, r.height, r.width);
+    root->layout();
+  }
 };

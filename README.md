@@ -1,256 +1,707 @@
-# TUI — Declarative React/JSX-Inspired Terminal UI Framework
+# TUI — Terminal UI Framework in C++20
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support/20)
 [![CMake](https://img.shields.io/badge/CMake-3.28+-green.svg)](https://cmake.org/)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-**TUI** is a modern, declarative, React/JSX-inspired terminal user interface (TUI) framework built from the ground up using C++20. It splits layout specification from component implementations by compiling JSX-like layout templates into a generic tree of component nodes, facilitating clean separation of concerns and high-performance, double-buffered rendering in the terminal.
+**TUI** is a terminal UI framework built in **C++20** around a **widget tree + layout container** architecture.
+Instead of manually drawing terminal characters in application code, interfaces are composed from widgets such as **Box**, **Text**, **Row**, **Column**, and **Grid**, then rendered into a terminal framebuffer.
 
----
+The project is currently focused on the **core rendering and layout foundation**:
 
-## 🎯 Goals & Non-Goals
+* a `Widget` base class
+* container widgets with child layout logic
+* recursive widget-tree rendering
+* Unicode-aware framebuffer output
+* basic layout primitives for terminal UIs
 
-### Goals
-* **Declarative Layouts**: Define terminal interfaces via clear, hierarchical JSX-like layout trees.
-* **Separation of Concerns**: Keep parser modules agnostic to specific widgets. The parser generates a generic node tree without knowing how a widget executes layout math or renders visually.
-* **Dynamic Widget Registration**: Add custom widgets to the runtime environment using a Widget Registry without modifying the parsing engine.
-* **Double-Buffered Rendering**: Track screen states to redraw only modified cells, reducing terminal flicker and optimizing performance.
-* **Modern C++ Architecture**: Leverage features of C++20 (including modules compatibility, standard library containers, and strong type safety).
-
-### Non-Goals
-* Not a web framework or GUI engine (does not compile to Web browsers, X11, Wayland, or desktop native windows).
-* Not a general-purpose HTML/XML validator.
-* Not an direct abstraction of complex Unix curses libraries (relies on raw ANSI escape sequences for maximum portability and compatibility).
+The long-term goal is to grow this into a more complete terminal UI framework with **better layout constraints, input handling, focus management, interactive widgets, and a cleaner declarative C++ API** built with templates / builder helpers.
 
 ---
 
-## 🏛️ Architecture Overview
+# Table of Contents
+
+* [Overview](#overview)
+* [Current Status](#current-status)
+* [Goals](#goals)
+* [Non-Goals](#non-goals)
+* [Architecture](#architecture)
+* [Core Components](#core-components)
+* [Current Widget System](#current-widget-system)
+* [Example](#example)
+* [Project Structure](#project-structure)
+* [Roadmap](#roadmap)
+* [Future Plans](#future-plans)
+* [Contributing](#contributing)
+* [License](#license)
+* [Getting Started](#getting-started)
+
+---
+
+# Overview
+
+TUI is currently built around a **widget tree** rather than direct terminal drawing calls.
+
+Instead of writing code like “draw a border at `(x, y)` and then draw text at `(x + 1, y + 1)`”, the interface is composed from widgets and layout containers:
+
+* **`Text`** renders aligned and wrapped text
+* **`Box`** draws borders and hosts an inner layout container
+* **`Row`** splits space horizontally among children
+* **`Column`** splits space vertically among children
+* **`Grid`** arranges children in a rectangular grid
+
+A root `WidgetTree` owns the top-level container, computes child rectangles recursively, and renders the tree into a `frameBuffer`, which is then written to the terminal.
+
+---
+
+# Current Status
+
+The project is currently in the **core widget / layout / rendering stage**.
+
+## Implemented
+
+* `Widget` base class
+* `Container` base class
+* `Row` layout container
+* `Column` layout container
+* `Grid` layout container
+* `Box` widget
+* `Text` widget
+* recursive widget-tree traversal and rendering
+* terminal `frameBuffer`
+* ANSI cursor / screen control helpers
+* Unicode UTF-8 conversion helpers
+* basic text wrapping utilities
+* text alignment (`left`, `right`, `center`)
+
+## In Progress / Next Focus
+
+* padding and margin
+* better layout constraints
+* proper render / layout separation cleanup
+* clipping / overflow handling
+* terminal resize handling
+* keyboard input and event propagation
+* focus system and interactive widgets
+
+---
+
+# Goals
+
+## Primary Goals
+
+### 1) Declarative terminal UI composition
+
+Build terminal interfaces by composing widgets into a tree instead of manually drawing each element.
+
+### 2) Clear layout containers
+
+Provide reusable layout primitives such as `Row`, `Column`, and `Grid` so complex UIs can be structured cleanly.
+
+### 3) Separation of layout and rendering
+
+Widgets should first compute geometry (`Rect`) and then render based on that geometry.
+
+### 4) Efficient terminal rendering
+
+Use a framebuffer-based rendering model that can later support diff-based or partial redraws.
+
+### 5) Extensible widget system
+
+Make it easy to add new widgets such as buttons, inputs, lists, or progress bars without rewriting the rendering core.
+
+### 6) Modern C++ design
+
+Use C++20 features while keeping the architecture understandable and easy to extend.
+
+---
+
+# Non-Goals
+
+* This is **not** a desktop GUI toolkit for X11, Wayland, Win32, or Cocoa.
+* This is **not** a web framework.
+* This is **not** an ncurses wrapper.
+* This is **not** intended to fully reproduce HTML/CSS layout behavior.
+* The project currently prioritizes **rendering architecture, layout design, and control over the terminal pipeline** over API stability.
+
+---
+
+# Architecture
+
+At a high level, the current framework follows this pipeline:
 
 ```text
-       [ JSX layout template ]
-                  │
-                  ▼
-               [ Lexer ]  <─── (Tokenizes layout tags & attributes)
-                  │
-                  ▼
-              [ Parser ]  <─── (Recursive-descent syntactic analyzer)
-                  │
-                  ▼
-          [ AST / Node Tree ]
-                  │
-                  ▼
-         [ Widget Registry ]  <─── (Resolves & instantiates widgets)
-                  │
-                  ▼
-           [ Layout Pass ]    <─── (Computes absolute widget coordinates)
-                  │
-                  ▼
-           [ Render Pass ]    <─── (Recursive DFS rendering of node tree)
-                  │
-                  ▼
-         [ Double Buffer ]    <─── (Diffs previous vs current frame cells)
-                  │
-                  ▼
-          [ Standard Out ]    <─── (ANSI escape outputs to user terminal)
+Application code
+      │
+      ▼
+ [ Widget Tree ]
+      │
+      ▼
+ [ Layout Step ]
+ - assign root rect
+ - containers compute child rects
+ - recurse through tree
+      │
+      ▼
+ [ Render Step ]
+ - each widget draws into frameBuffer
+ - recurse through widget tree
+      │
+      ▼
+ [ Terminal Output ]
+ - convert framebuffer cells to UTF-8 output
+ - write to stdout
 ```
 
-1. **Lexer & Parser**: The Lexer scans input layout syntax. The Parser uses a recursive-descent strategy to build a tree of generic `Node` objects containing tag names (e.g. `"Box"`, `"Text"`) and their attributes represented as a key-value attribute collection.
-2. **Widget Registry**: Converts generic parsed `Node` targets into runtime subclass representations of `Widget` (such as `Box` or `Text`) via an extensible dynamic lookup table.
-3. **Layout Engine**: Traverses the instantiated tree to compute sizing and positional coordinates (`Rect`) based on alignment properties and parent bounds.
-4. **Double Buffer Rendering**: A double buffer (`frameBuffer`) keeps track of current and previous frame cells. When rendering, only the diffed differences are flushed to stdout, resulting in highly responsive terminal interactions.
+The current codebase is centered around **runtime widget objects** connected in a tree, rather than a parser or markup system.
 
 ---
 
-## 📐 Widget Hierarchy
+# Core Components
 
-The framework provides an abstract `Widget` base class which represents any drawable component in the terminal grid layout:
+## `Widget`
 
-```mermaid
-classDiagram
-    class Widget {
-        <<Abstract>>
-        +Rect rect
-        +Widget* parent
-        +render(frameBuffer& fb)*
-    }
-    class Box {
-        +boxOutlineDetails outline
-        +render(frameBuffer& fb)
-    }
-    class Text {
-        +string text
-        +Sytle style
-        +Alignment alignment
-        +render(frameBuffer& fb)
-    }
-    Widget <|-- Box
-    Widget <|-- Text
-```
+Base abstract class for every drawable UI element.
 
----
+Current responsibilities:
 
-## 🚀 Hello World Example
+* stores its rectangle (`Rect`)
+* stores a pointer to its parent
+* exposes a virtual `render(frameBuffer&)` function
 
-Below is a simple programmatic example showcasing how to initialize the TUI terminal engine and draw widgets directly to the double buffer:
+Conceptually:
 
 ```cpp
-#include "terminal.hpp"
+class Widget {
+public:
+    Rect rect;
+    Widget* parent = nullptr;
+
+    virtual void render(frameBuffer& fb) = 0;
+    virtual ~Widget() = default;
+};
+```
+
+---
+
+## `Container`
+
+Base class for widgets that hold child widgets.
+
+Current responsibilities:
+
+* owns `std::vector<std::unique_ptr<Widget>> children`
+* provides `addChild`, `removeChild`, and `clearChildren`
+* exposes `setRectForChildren()` so derived layout containers can place children
+
+Derived layout containers include:
+
+* `Row`
+* `Column`
+* `Grid`
+
+---
+
+## `frameBuffer`
+
+Represents the terminal drawing surface.
+
+Current responsibilities:
+
+* stores terminal width and height
+* stores the current cell buffer
+* stores a previous frame buffer (foundation for future diff rendering)
+* supports glyph and style assignment per cell
+* produces the final terminal output string
+
+---
+
+## `WidgetTree`
+
+Owns the root container and drives recursive layout/render traversal.
+
+Current responsibilities:
+
+* sets the root rectangle to the terminal size
+* recursively calls `setRectForChildren()` through the tree
+* renders leaf widgets into the framebuffer
+* displays the framebuffer contents
+
+---
+
+## `tools`
+
+Small terminal helper functions for:
+
+* hiding / showing the cursor
+* moving the cursor to the home position
+* clearing the screen
+* setting cursor position
+
+---
+
+## `unicode`
+
+Utility helpers for converting `char32_t` / UTF-32 text into UTF-8 strings for terminal output.
+
+---
+
+# Current Widget System
+
+## `Text`
+
+`Text` is the main text rendering widget.
+
+### Current features
+
+* stores a `std::string`
+* supports a `Sytle` object for foreground/background color and text attributes
+* supports alignment:
+
+  * `left`
+  * `right`
+  * `center`
+* wraps text using helper functions before drawing into its rectangle
+
+### Current behavior
+
+Text is rendered inside the widget’s assigned rectangle, line by line, with optional alignment per line.
+
+---
+
+## `Box`
+
+`Box` draws a bordered rectangle using a chosen outline style and can host an inner layout container.
+
+### Current features
+
+* multiple border presets:
+
+  * light
+  * heavy
+  * double border
+  * rounded
+  * dashed
+  * block
+  * ascii
+* optional inner layout container (`Row`, `Column`, etc.)
+* renders children inside the inner content area of the box
+
+### Current behavior
+
+When rendered, `Box`:
+
+1. draws its border
+2. shrinks the inner area by one cell on each side
+3. assigns that inner rectangle to its internal layout container
+4. renders the layout container’s children inside the box
+
+---
+
+## `Row`
+
+Splits the available width among children.
+
+### Current behavior
+
+* divides the parent width equally among all children
+* the last child receives the remaining width to avoid truncation from integer division
+
+---
+
+## `Column`
+
+Splits the available height among children.
+
+### Current behavior
+
+* divides the parent height equally among all children
+* the last child receives the remaining height
+
+---
+
+## `Grid`
+
+Arranges children into a fixed number of rows and columns.
+
+### Current behavior
+
+* each child is assigned a grid cell based on index
+* the last row / column receives any leftover space from integer division
+
+---
+
+# Example
+
+Below is a small example based on the current architecture style of the project.
+
+```cpp
+#include <unistd.h>
+
+#include <memory>
+
+#include "ColumnContainer.hpp"
+#include "GridContainer.hpp"
+#include "RowContainer.hpp"
+#include "box.hpp"
+#include "text.hpp"
 #include "tools.hpp"
+#include "widgetTree.hpp"
 
 int main() {
-    // Instantiate terminal window manager
-    terminal term;
-    
-    // Hide terminal cursor for cleaner rendering output
-    tools::invisiableCursor();
+  tools::invisiableCursor();
+  tools::clearScreen();
 
-    for (;;) {
-        // Move terminal cursor back to top-left coordinate (0, 0)
-        tools::cursorHomePosition();
-        
-        // Measure current size of standard output terminal
-        term.measurements();
-        
-        // Allocate current and previous frame cell buffers
-        term.createScreen();
-        
-        // Draw layout elements
-        // Draw a thick outer border spanning the entire terminal size
-        term.drawBox(boxStyle::light, {0, 0, term.row, term.col});
-        
-        // Draw a heavy accent box container
-        term.drawBox(boxStyle::heavy, {1, 1, 10, 25});
-        
-        // Render simple text inside our accent box
-        term.drawText(2, 2, "Hello World");
-        
-        // Compare double buffers and write modifications to standard output
-        term.display();
-    }
-    return 0;
+  auto MainContainer = std::make_unique<Column>();
+
+  auto text1 = std::make_unique<Text>("Hello neighbor");
+
+  auto innerBox = std::make_unique<Box>(
+      std::make_unique<Row>(),
+      std::vector<std::unique_ptr<Widget>>{}
+  );
+
+  auto text2 = std::make_unique<Text>("Hi");
+  innerBox->layoutType->addChild(std::move(text2));
+
+  MainContainer->addChild(std::move(innerBox));
+  MainContainer->addChild(std::move(text1));
+
+  WidgetTree tree(std::move(MainContainer));
+
+  for (;;) {
+    tools::cursorHomePosition();
+    tree.fb.resizeBuffer();
+    tree.dfs();
+    tree.display();
+    usleep(50000);
+  }
+
+  tools::visiableCursor();
+  return 0;
 }
 ```
 
+This produces a UI tree roughly like:
+
+```text
+Column
+├── Box
+│   └── Row
+│       └── Text("Hi")
+└── Text("Hello neighbor")
+```
+
 ---
 
-## ⚙️ Installation & Build Instructions
+# Project Structure
 
-### Prerequisites
-- A modern C++ compiler supporting C++20 (e.g., Clang 16+, GCC 13+).
-- **CMake** version 3.28 or later.
-- **Ninja** generator (highly recommended for processing C++ modules dependencies cleanly).
+The exact file structure may evolve, but the current project is organized around these core files:
 
-### Getting Started
+```text
+.
+├── box.hpp
+├── ColumnContainer.hpp
+├── container.hpp
+├── frameBuffer.hpp
+├── GridContainer.hpp
+├── RowContainer.hpp
+├── splitParagraphs.hpp
+├── text.hpp
+├── tools.hpp
+├── unicode.hpp
+├── widget.hpp
+├── widgetTree.hpp
+├── tools.cpp
+├── unicode.cpp
+└── main.cpp
+```
+
+## File Roles
+
+* **`widget.hpp`** — base widget abstraction and `Rect`
+* **`container.hpp`** — base class for widgets with children
+* **`RowContainer.hpp`** — horizontal layout container
+* **`ColumnContainer.hpp`** — vertical layout container
+* **`GridContainer.hpp`** — grid layout container
+* **`box.hpp`** — bordered box widget with optional inner layout
+* **`text.hpp`** — text rendering widget
+* **`splitParagraphs.hpp`** — text wrapping helpers
+* **`frameBuffer.hpp`** — terminal cell buffer and display pipeline
+* **`widgetTree.hpp`** — recursive tree traversal and rendering
+* **`tools.hpp` / `tools.cpp`** — ANSI terminal helper functions
+* **`unicode.hpp` / `unicode.cpp`** — UTF-8 conversion helpers
+* **`main.cpp`** — example / testing entry point
+
+---
+
+# Roadmap
+
+The roadmap below reflects the **current actual direction of the project**.
+
+---
+
+## Phase 1 — Core Rendering Foundation
+
+* [x] `Widget` base class
+* [x] `Container` base class
+* [x] `Text` widget
+* [x] `Box` widget
+* [x] `Row` layout container
+* [x] `Column` layout container
+* [x] `Grid` layout container
+* [x] recursive widget tree rendering
+* [x] terminal framebuffer
+* [x] Unicode-aware terminal output helpers
+
+---
+
+## Phase 2 — Layout System Refinement
+
+* [ ] padding support
+* [ ] margin support
+* [ ] child alignment inside containers
+* [ ] widget size constraints (`fixed`, `auto`, `fill`)
+* [ ] min / max size constraints
+* [ ] better clipping / overflow handling
+* [ ] cleaner layout-pass structure
+
+---
+
+## Phase 3 — Text System Improvements
+
+* [x] basic paragraph wrapping helpers
+* [x] left / right / center text alignment
+* [ ] better text measurement
+* [ ] multi-style / rich text support
+* [ ] paragraph widget
+* [ ] text clipping / ellipsis behavior
+
+---
+
+## Phase 4 — Runtime / Rendering Improvements
+
+* [ ] terminal resize handling
+* [ ] safer framebuffer bounds handling
+* [ ] diff-based redraw using `previousFrame`
+* [ ] partial redraw / dirty-cell optimizations
+* [ ] cleaner render loop abstraction
+
+---
+
+## Phase 5 — Input & Events
+
+* [ ] non-blocking keyboard input
+* [ ] event abstraction (`KeyPress`, `Resize`, etc.)
+* [ ] event propagation through widget tree
+* [ ] focus management
+* [ ] focus traversal / tab navigation
+
+---
+
+## Phase 6 — Interactive Widgets
+
+* [ ] button
+* [ ] checkbox
+* [ ] radio group
+* [ ] toggle switch
+* [ ] menu / list selection widgets
+
+---
+
+## Phase 7 — Input Widgets
+
+* [ ] text input
+* [ ] password input
+* [ ] text area
+* [ ] cursor editing behavior
+* [ ] selection / editing state management
+
+---
+
+## Phase 8 — Advanced Layout & Containers
+
+* [ ] scrollable containers
+* [ ] split panes
+* [ ] stack / overlay containers
+* [ ] more flexible grid sizing
+* [ ] flex-style layout system
+
+---
+
+## Phase 9 — Data / Complex Widgets
+
+* [ ] list view
+* [ ] table widget
+* [ ] tree view
+* [ ] tabs
+* [ ] progress bars
+* [ ] modal / popup support
+
+---
+
+## Phase 10 — API & Ecosystem
+
+* [ ] declarative builder helpers for cleaner widget construction
+* [ ] template-based UI composition helpers
+* [ ] style / theme system
+* [ ] markdown renderer
+* [ ] syntax-highlighted code widget
+* [ ] documentation demos and examples
+
+---
+
+# Future Plans
+
+The project is **not** moving toward a JSX / parser-based architecture.
+The more likely long-term direction is a **cleaner declarative C++ API** built using **templates and helper builders**.
+
+## 1) Cleaner C++ construction API
+
+The current construction style is functional, but verbose because it relies heavily on `std::make_unique` and explicit container setup.
+
+A future goal is to allow code like:
+
+```cpp
+auto ui = box(
+    column(
+        text("Dashboard"),
+        row(
+            box(text("CPU")),
+            box(text("RAM")),
+            box(text("Disk"))
+        )
+    )
+);
+```
+
+This would keep the framework fully in C++ while making UI construction feel more declarative.
+
+---
+
+## 2) Better layout constraints
+
+The current layout containers divide space equally.
+A future layout system should support things like:
+
+* fixed sizes
+* fill / flex behavior
+* minimum and maximum sizes
+* padding / margin
+* alignment within parent containers
+
+---
+
+## 3) Interactive widgets and input handling
+
+Once the layout and rendering core is stable, the next major milestone is building actual terminal applications with:
+
+* keyboard input
+* focus handling
+* buttons
+* inputs
+* menus
+* scrollable views
+
+---
+
+## 4) Better rendering performance
+
+The current framebuffer already stores a `previousFrame`, which can later be used for:
+
+* diff-based redraw
+* reduced terminal writes
+* dirty-cell tracking
+* more efficient rendering loops
+
+---
+
+## 5) Stronger styling system
+
+The project already has a basic `Sytle` structure for foreground/background colors and attributes.
+This can grow into a more complete styling system with:
+
+* widget-level style presets
+* theme support
+* state-based styles for focus / active / disabled widgets
+
+---
+
+# Contributing
+
+Contributions, suggestions, and architecture feedback are welcome.
+
+If you want to contribute:
+
+1. Fork the repository
+2. Create a feature branch
+3. Keep the code C++20-compatible
+4. Prefer focused pull requests
+5. If you change architecture or public API direction, document the reasoning clearly in the PR description
+
+---
+
+# License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+# Getting Started
+
+## Requirements
+
+* C++20 compiler
+* CMake 3.28+
+* Ninja recommended
+
+## Clone the repository
 
 ```bash
-# Clone the repository
 git clone https://github.com/AlterWill/TUI.git
 cd TUI
+```
 
-# Clean any existing build artifacts
+## Build
+
+```bash
 rm -rf build
-
-# Configure using CMake with the Ninja generator
 cmake -G Ninja -B build
-
-# Build the executable
 cmake --build build
+```
 
-# Run the program
+## Run
+
+```bash
 ./build/tui
 ```
 
 ---
 
-## 🗺️ Roadmap
+## Suggested Reading Order for the Codebase
 
-The project is structured in 10 progressive phases of development:
+If you want to understand the project internals, a good reading order is:
 
-### Phase 1: Core Foundation
-- [x] Basic programmatic Widget tree hierarchy setup
-- [x] Double-buffered `frameBuffer` configuration
-- [x] Character and text draw pipeline (`Text::render`)
-- [x] Outlined box drawing system (`Box::render`)
-- [ ] Element visual Padding calculation
-- [ ] Element Margin boundaries support
-- [ ] Styled text properties (bold, italic, underlines)
-- [ ] Row flow layout manager
-- [ ] Column flow layout manager
-
-### Phase 2: Text System
-- [x] Word wrapping paragraph helper functions
-- [x] Text alignments (left, right, center alignment)
-- [ ] Rich markup parsing logic (colored spans, embedded styles)
-- [ ] Paragraph widget container holding block-wrapped text
-
-### Phase 3: Interactive Widgets
-- [ ] Button widget with active highlight states
-- [ ] Checkbox widget toggle selectors
-- [ ] Radio button group selectors
-- [ ] Toggle switch widget
-
-### Phase 4: Input
-- [ ] Non-blocking terminal keyboard event loops
-- [ ] Focus management system (moving cursor selection through inputs)
-- [ ] TextInput widget for inline editing
-- [ ] PasswordInput widget masking user characters
-- [ ] TextArea widget for multi-line textual editors
-
-### Phase 5: Layout
-- [ ] Flex layouts (mimicking CSS flexbox styles)
-- [ ] Grid layout structures
-- [ ] Scrollable window containers
-
-### Phase 6: Data Widgets
-- [ ] Dynamic lists (lists of selectable items with scroll tracking)
-- [ ] Data tables supporting horizontal columns and alignments
-- [ ] Tree view expansion/contraction structures
-
-### Phase 7: Terminal Features
-- [ ] Terminal mouse support (click, scroll, select events)
-- [x] Wide Unicode character support (UTF-8, UTF-32 conversion)
-- [ ] Terminal window resize signal handling
-- [x] Standard 16-color ANSI output styling
-
-### Phase 8: Advanced Widgets
-- [ ] Multi-tab views
-- [ ] Dropdown popup menus
-- [ ] Modal dialog boxes
-- [ ] Transient popup notifications
-- [ ] Loading progress bars
-
-### Phase 9: Rendering Optimizations
-- [ ] Dirty rectangle tracking (rendering only bounding boxes that changed)
-- [ ] Virtual DOM representation of component state
-- [ ] Render tree diffing algorithm
-
-### Phase 10: Ecosystem
-- [ ] Styled configuration theme files (JSON or YAML format)
-- [ ] Markdown terminal renderer
-- [ ] Code syntax highlighting widget
-- [ ] Declarative JSON configuration loading
-- [ ] C++ Declarative UI DSL
+1. `widget.hpp`
+2. `container.hpp`
+3. `RowContainer.hpp`, `ColumnContainer.hpp`, `GridContainer.hpp`
+4. `box.hpp`
+5. `text.hpp`
+6. `frameBuffer.hpp`
+7. `widgetTree.hpp`
+8. `main.cpp`
 
 ---
 
-## 🔮 Future Ideas
-* **Hot Module Reloading (HMR)**: Automatically update layout styles in runtime by editing layout JSX configs without rebuilding binary files.
-* **WebAssembly Terminal Target**: Compile using Emscripten to run terminal UI components directly in browser applications.
-* **CSS-Style Selectors**: Assign stylesheets externally to configure widget styling rules using target class names or ID tags.
+## Suggested Next Milestones for Development
 
----
+If you are actively building the framework, the most useful next steps are:
 
-## 🤝 Contribution Guidelines
-
-We welcome contributions! Please follow these guidelines:
-1. Fork this repository and create your feature branch: `git checkout -b feature/cool-feature`
-2. Follow modern C++20 standard conventions and ensure formatting rules compile nicely.
-3. Keep code clean and lint-free by using the configuration defined in our [.clangd](.clangd) files.
-4. Open a pull request explaining your changes and reference relevant issues.
-
----
-
-## 📄 License
-
-This project is licensed under the terms of the [MIT License](LICENSE).
+1. **Padding + margin**
+2. **Layout constraints (`fixed`, `fill`, `auto`)**
+3. **Clipping / overflow handling**
+4. **Terminal resize handling**
+5. **Keyboard event system**
+6. **Focus management**
+7. **Button / input widgets**
+8. **Cleaner template-based construction helpers**

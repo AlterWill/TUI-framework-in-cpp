@@ -1,8 +1,8 @@
 BasedOnStyle: Google
-ColumnLimit: 120
+ColumnLimit: 140
 IndentWidth: 2
 BinPackArguments: false
 BinPackParameters: false
 AlignAfterOpenBracket: BlockIndent
-AllowShortFunctionsOnASingleLine: None
+AllowShortFunctionsOnASingleLine: True
 

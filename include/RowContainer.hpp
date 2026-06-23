@@ -1,23 +1,24 @@
 #pragma once
 
-#include <cmath>
-
 #include "container.hpp"
 
 class Row : public Container {
-  Row(std::vector<std::unique_ptr<Widget>> c) : children(std::move(c)) {
+ public:
+  Row() = default;
+
+  Row(std::vector<std::unique_ptr<Widget>> c) {
+    children = std::move(c);
   }
 
   void setRectForChildren() override {
     int childrenLen = children.size();
-    int Childwidth = static_cast<double>(rect.width) / childrenLen;
-    int Childheight = static_cast<double>(rect.height) / childrenLen;
-    int currentXY;
+    int ChildWidth = rect.width / childrenLen;
+    int currentX;
     for (int i = 0; i < childrenLen - 1; i++) {
-      int currentXY = i * std::floor(Childheight);
-      children[i]->setRect(rect.x + currentXY, rect.y, rect.height, currentXY);
+      currentX = i * ChildWidth;
+      children[i]->setRect(rect.x + currentX, rect.y, rect.height, ChildWidth);
     }
-    currentXY = (childrenLen - 1) * std::ceil(Childwidth);
-    children[childrenLen - 1]->setRect(rect.x + currentXY, rect.y, rect.height, currentXY);
+    currentX = (childrenLen - 1) * ChildWidth;
+    children[childrenLen - 1]->setRect(rect.x + currentX, rect.y, rect.height, rect.width - currentX);
   }
 };

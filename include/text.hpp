@@ -19,10 +19,18 @@ class Text : public Widget {
   Sytle style;
   Alignment alignment;
 
-  Text(Rect r, std::string t, Sytle s = Sytle(), Alignment a = Alignment::left) {
-    rect = r;
-    text = t;
-    style = s;
+  Text(std::string t, Sytle s = Sytle(), Alignment a = Alignment::left) : text(t), style(s), alignment(a) {
+  }
+
+  void setText(std::string t) {
+    text = std::move(t);
+  }
+
+  void setStyle(Sytle s) {
+    style = std::move(s);
+  }
+
+  void setAlignment(Alignment a) {
     alignment = a;
   }
 

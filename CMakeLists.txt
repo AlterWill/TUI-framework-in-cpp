@@ -20,9 +20,6 @@ add_executable(tui)
 target_sources(tui
   PRIVATE
     src/main.cpp
-    src/lexer.cpp
-    src/parser.cpp
-    src/ast.cpp
     src/tools.cpp
     src/unicode.cpp
 )

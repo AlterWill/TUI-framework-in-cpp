@@ -9,9 +9,9 @@ struct Rect {
 };
 
 class Widget {
- public:
+public:
   Rect rect;
-  Widget* parent = nullptr;
+  Widget *parent = nullptr;
 
   void setRect(int x, int y, int height, int width) {
     rect.x = x;
@@ -20,8 +20,8 @@ class Widget {
     rect.width = width;
   }
 
-  virtual void render(frameBuffer& fb) = 0;
+  virtual void render(frameBuffer &fb) = 0;
+  virtual void layout() = 0;
 
-  virtual ~Widget() {
-  }
+  virtual ~Widget() {}
 };

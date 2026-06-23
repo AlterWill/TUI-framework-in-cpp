@@ -42,27 +42,32 @@ struct Cell {
 };
 
 class frameBuffer {
-  int row;
-  int col;
   winsize w;
   std::vector<Cell> buffer;
   std::vector<Cell> previousFrame;
 
- public:
+public:
+  int row;
+  int col;
   std::string displayOutput;
   frameBuffer() {
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     row = w.ws_row;
     col = w.ws_col;
     buffer.resize(row * col);
-    previousFrame.resize(row * col);
+    previousFrame.resize(row * col, Cell{});
     displayOutput = "";
   }
+
+  void clear() { std::fill(buffer.begin(), buffer.end(), Cell{}); }
+
   void resizeBuffer() {
+    displayOutput.clear();
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     row = w.ws_row;
     col = w.ws_col;
     buffer.resize(row * col);
+    clear();
   }
 
   void setGlyph(int x, int y, char32_t glyph) {
@@ -78,17 +83,20 @@ class frameBuffer {
     buffer[y * col + x].sytle.bg = bg;
   }
 
-  void setCell(int x, int y, const Cell& NewCell) {
+  void setCell(int x, int y, const Cell &NewCell) {
     buffer[y * col + x] = NewCell;
   }
 
   void display() {
     displayOutput.clear();
-    for (int i = 0; i < row; i++) {
+    for (int i = 0; i < row - 1; i++) {
       for (int j = 0; j < col; j++) {
         displayOutput += unicode::toUtf8(buffer[i * col + j].glyph);
       }
       displayOutput += '\n';
+    }
+    for (int j = 0; j < col; j++) {
+      displayOutput += unicode::toUtf8(buffer[(row - 1) * col + j].glyph);
     }
   }
 };
