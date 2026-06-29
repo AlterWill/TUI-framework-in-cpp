@@ -15,21 +15,36 @@ public:
   }
 
   void setRectForChildren() override {
-    int childrenLen = children.size();
     if (rows <= 0 || columns <= 0) {
       throw std::runtime_error("Invalid amount of rows and columns");
     }
-    int childWidth = rect.width / columns;
-    int childHeight = rect.height / rows;
+    int childrenLen = children.size();
+    if (childrenLen == 0) {
+      return;
+    }
+
+    int childWidth =
+        std::max(0, rect.width - padding.right - padding.left) / columns;
+    int childHeight =
+        std::max(0, rect.height - padding.top - padding.bottom) / rows;
+    int startX = rect.x + padding.left;
+    int startY = rect.y + padding.top;
 
     for (int i = 0; i < childrenLen; i++) {
       int r = i / columns;
       int c = i % columns;
 
-      int x = rect.x + c * childWidth;
-      int y = rect.y + r * childHeight;
-      int w = (c == columns - 1) ? (rect.width - c * childWidth) : childWidth;
-      int h = (r == rows - 1) ? (rect.height - r * childHeight) : childHeight;
+      if (r >= rows) {
+        break;
+      }
+
+      int x = startX + c * childWidth;
+      int y = startY + r * childHeight;
+
+      int w = (c == columns - 1) ? (rect.width - c * childWidth)
+                                 : childWidth - padding.right;
+      int h = (r == rows - 1) ? (rect.height - r * childHeight)
+                              : childHeight - padding.left;
 
       children[i]->setRect(x, y, h, w);
     }

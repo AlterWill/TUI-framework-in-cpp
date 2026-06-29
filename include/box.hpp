@@ -35,7 +35,7 @@ public:
       boxOutlineDetails o = boxStyle::light)
       : outline(o), layoutType(std::move(main)) {
     if (layoutType) {
-      layoutType->children = std::move(ContainerChildren);
+      layoutType->child = std::move(ContainerChildren);
     }
   }
 
@@ -65,10 +65,8 @@ public:
     if (layoutType) {
       layoutType->setRect(rect.x + 1, rect.y + 1, rect.height - 2,
                           rect.width - 2);
-      layoutType->setRectForChildren();
-      for (auto &child : layoutType->children) {
-        child->render(fb);
-      }
+      layoutType->setRectForChild();
+      child->render(fb);
     }
   }
 };

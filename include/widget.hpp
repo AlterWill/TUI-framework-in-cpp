@@ -2,16 +2,36 @@
 
 #include "frameBuffer.hpp"
 struct Rect {
-  int x = 0;
-  int y = 0;
-  int height = 0;
-  int width = 0;
+  int x{};
+  int y{};
+  int height{};
+  int width{};
+};
+
+struct Insets {
+  int top{};
+  int bottom{};
+  int right{};
+  int left{};
+
+  static constexpr Insets all(int value) {
+    return {value, value, value, value};
+  }
+
+  static constexpr Insets symmetric(int x, int y) { return {y, y, x, x}; }
 };
 
 class Widget {
 public:
   Rect rect;
   Widget *parent = nullptr;
+
+  Insets padding;
+  Insets margin;
+
+  void setPadding(Insets p) { padding = p; }
+
+  void setMargin(Insets m) { margin = m; }
 
   void setRect(int x, int y, int height, int width) {
     rect.x = x;

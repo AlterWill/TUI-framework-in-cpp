@@ -5,17 +5,37 @@
 class Column : public MultiChildWidget {
 public:
   void setRectForChildren() override {
-    int childrenLen = children.size();
-    if (childrenLen == 0)
+    if (children.empty()) {
       return;
-    int Childheight = rect.height / childrenLen;
+    }
+
+    int usableWidth = std::max(0, rect.width - padding.left - padding.right);
+    int usableHeight = std::max(0, rect.height - padding.top - padding.bottom);
+    int startX = rect.x + padding.left;
+    int startY = rect.y + padding.top;
+
+    size_t childrenLen = children.size();
+    int Childheight = usableHeight / childrenLen;
     int currentY = 0;
-    for (int i = 0; i < childrenLen - 1; i++) {
+    for (size_t i = 0; i < childrenLen - 1; i++) {
       currentY = i * Childheight;
-      children[i]->setRect(rect.x, rect.y + currentY, Childheight, rect.width);
+      // clang-format off
+      children[i]->setRect(
+        startX + children[i]->margin.left,
+        startY + currentY + children[i]->margin.top,
+        std::max(0, usableHeight - children[i]->margin.top - children[i]->margin.bottom),
+        std::max(0, usableWidth - children[i]->margin.left - children[i]->margin.right)
+      );
+      // clang-format on
     }
     currentY = (childrenLen - 1) * Childheight;
-    children[childrenLen - 1]->setRect(rect.x, rect.y + currentY,
-                                       rect.height - currentY, rect.width);
+    // clang-format off
+    children[childrenLen - 1]->setRect(
+      startX + children[childrenLen -1 ]->margin.left,
+      startY + children[childrenLen -1]->margin.top + currentY,
+      std::max(0,usableHeight - currentY - children[childrenLen-1 ]->margin.top- children[childrenLen -1 ]->margin.bottom),
+      std::max(0,usableWidth - children[childrenLen-1 ]->margin.left - children[childrenLen -1 ]->margin.right)
+    );
+    // clang-format on
   }
 };
