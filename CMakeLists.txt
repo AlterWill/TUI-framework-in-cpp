@@ -29,5 +29,12 @@ target_include_directories(tui PRIVATE include)
 
 # Set common compiler warnings and optimization levels
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  target_compile_options(tui PRIVATE -Wall -Wextra -O2)
+  target_compile_options(tui PRIVATE 
+    -Wall 
+    -Wextra 
+    #-Wpedantic
+    #-Wconversion
+    #-Werror
+    -O2
+  )
 endif()

@@ -14,31 +14,28 @@ enum class Alignment {
 };
 
 class Text : public Widget {
- public:
+public:
   std::string text;
   Sytle style;
   Alignment alignment;
 
-  Text(std::string t, Sytle s = Sytle(), Alignment a = Alignment::left) : text(t), style(s), alignment(a) {
-  }
+  Text(std::string t, Sytle s = Sytle(), Alignment a = Alignment::left)
+      : text(t), style(s), alignment(a) {}
 
-  void setText(std::string t) {
-    text = std::move(t);
-  }
+  void setText(std::string t) { text = std::move(t); }
 
-  void setStyle(Sytle s) {
-    style = std::move(s);
-  }
+  void setStyle(Sytle s) { style = std::move(s); }
 
-  void setAlignment(Alignment a) {
-    alignment = a;
-  }
+  void setAlignment(Alignment a) { alignment = a; }
 
-  void render(frameBuffer& fb) override {
+  void layout() override {};
+
+  void render(frameBuffer &fb) override {
     std::vector<std::string> lines = convertStringToParagraph(text, rect.width);
 
-    for (int i = 0; i < rect.height && i < static_cast<int>(lines.size()); i++) {
-      const std::string& line = lines[i];
+    for (int i = 0; i < rect.height && i < static_cast<int>(lines.size());
+         i++) {
+      const std::string &line = lines[i];
       int lineLen = line.length();
 
       int xOffset = rect.x;

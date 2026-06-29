@@ -1,8 +1,8 @@
 #pragma once
 
-#include "container.hpp"
+#include "multiChildWidget.hpp"
 
-class Grid : public Container {
+class Grid : public MultiChildWidget {
 public:
   int rows = 1;
   int columns = 1;

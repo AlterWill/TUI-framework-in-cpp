@@ -4,42 +4,32 @@
 
 #include "ColumnContainer.hpp"
 #include "GridContainer.hpp"
-#include "RowContainer.hpp"
-#include "box.hpp"
 #include "text.hpp"
 #include "tools.hpp"
 #include "widgetTree.hpp"
-
-// Define the missing Container::render method to satisfy the linker
-void Container::render(frameBuffer &fb) {
-  for (auto &child : children) {
-    child->render(fb);
-  }
-}
 
 int main() {
   tools::invisiableCursor();
   tools::clearScreen();
 
-  auto MainContainer = std::make_unique<Grid>(9, 9);
+  auto MainContainer = std::make_unique<Column>();
 
   auto text1 = std::make_unique<Text>("Hello neighbor ");
+  text1->setAlignment(Alignment::center);
 
-  auto innerBox = std::make_unique<Box>(std::make_unique<Row>(),
-                                        std::vector<std::unique_ptr<Widget>>{});
   auto text2 = std::make_unique<Text>("Hi");
   text2->setAlignment(Alignment::right);
-  innerBox->layoutType->addChild(std::move(text2));
 
-  MainContainer->addChild(std::move(innerBox));
   MainContainer->addChild(std::move(text1));
+  MainContainer->addChild(std::move(text2));
 
   WidgetTree tree(std::move(MainContainer));
 
   for (;;) {
     tools::cursorHomePosition();
     tree.fb.resizeBuffer();
-    tree.dfs();
+    tree.layout({0, 0, tree.fb.row, tree.fb.col});
+    tree.render();
     tree.display();
     usleep(50000);
   }

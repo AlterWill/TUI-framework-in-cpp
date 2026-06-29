@@ -1,24 +1,26 @@
 #pragma once
 
-#include "container.hpp"
+#include "multiChildWidget.hpp"
 
-class Row : public Container {
- public:
+class Row : public MultiChildWidget {
+public:
   Row() = default;
 
-  Row(std::vector<std::unique_ptr<Widget>> c) {
-    children = std::move(c);
-  }
+  Row(std::vector<std::unique_ptr<Widget>> c) { children = std::move(c); }
 
   void setRectForChildren() override {
-    int childrenLen = children.size();
-    int ChildWidth = rect.width / childrenLen;
+    if (children.empty()) {
+      return;
+    }
+    size_t childrenLen = children.size();
+    int ChildWidth = rect.width / static_cast<int>(childrenLen);
     int currentX;
-    for (int i = 0; i < childrenLen - 1; i++) {
-      currentX = i * ChildWidth;
+    for (size_t i = 0; i < childrenLen - 1; i++) {
+      currentX = static_cast<int>(i) * ChildWidth;
       children[i]->setRect(rect.x + currentX, rect.y, rect.height, ChildWidth);
     }
-    currentX = (childrenLen - 1) * ChildWidth;
-    children[childrenLen - 1]->setRect(rect.x + currentX, rect.y, rect.height, rect.width - currentX);
+    currentX = static_cast<int>(childrenLen - 1) * ChildWidth;
+    children[childrenLen - 1]->setRect(rect.x + currentX, rect.y, rect.height,
+                                       rect.width - currentX);
   }
 };

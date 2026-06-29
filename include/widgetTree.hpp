@@ -1,8 +1,9 @@
 #pragma once
 
+#include "widget.hpp"
 #include <iostream>
+#include <memory>
 
-#include "container.hpp"
 class WidgetTree {
 public:
   std::unique_ptr<Widget> root;

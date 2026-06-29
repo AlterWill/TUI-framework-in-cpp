@@ -1,7 +1,7 @@
 #pragma once
 
-#include "container.hpp"
 #include "frameBuffer.hpp"
+#include "singleChildWidget.hpp"
 
 struct boxOutlineDetails {
   char32_t horizontal;
@@ -25,12 +25,12 @@ inline constexpr boxOutlineDetails ascii = {U'-', U'|', U'+', U'+', U'+', U'+'};
 }
 // clang-format on
 
-class Box : public Widget {
+class Box : public SingleChildWidget {
 public:
   boxOutlineDetails outline;
-  std::unique_ptr<Container> layoutType;
+  std::unique_ptr<SingleChildWidget> layoutType;
 
-  Box(std::unique_ptr<Container> main,
+  Box(std::unique_ptr<SingleChildWidget> main,
       std::vector<std::unique_ptr<Widget>> ContainerChildren,
       boxOutlineDetails o = boxStyle::light)
       : outline(o), layoutType(std::move(main)) {
