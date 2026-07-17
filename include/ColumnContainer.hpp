@@ -3,7 +3,7 @@
 #include "multiChildWidget.hpp"
 
 class Column : public MultiChildWidget {
-public:
+ public:
   void setRectForChildren() override {
     if (children.empty()) {
       return;
@@ -23,7 +23,7 @@ public:
       children[i]->setRect(
         startX + children[i]->margin.left,
         startY + currentY + children[i]->margin.top,
-        std::max(0, usableHeight - children[i]->margin.top - children[i]->margin.bottom),
+        std::max(0, Childheight - children[i]->margin.top - children[i]->margin.bottom),
         std::max(0, usableWidth - children[i]->margin.left - children[i]->margin.right)
       );
       // clang-format on

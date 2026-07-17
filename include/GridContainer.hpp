@@ -3,7 +3,7 @@
 #include "multiChildWidget.hpp"
 
 class Grid : public MultiChildWidget {
-public:
+ public:
   int rows = 1;
   int columns = 1;
 

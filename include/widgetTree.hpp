@@ -1,7 +1,6 @@
 #pragma once
 
 #include "widget.hpp"
-#include <iostream>
 #include <memory>
 
 class WidgetTree {
@@ -20,7 +19,6 @@ public:
 
   void display() {
     fb.display();
-    std::cout << fb.displayOutput << std::flush;
   }
 
   void setRoot(std::unique_ptr<Widget> r) { root = std::move(r); }

@@ -1,8 +1,9 @@
 BasedOnStyle: Google
-ColumnLimit: 140
+ColumnLimit: 120
 IndentWidth: 2
 BinPackArguments: false
-BinPackParameters: false
-AlignAfterOpenBracket: BlockIndent
-AllowShortFunctionsOnASingleLine: True
-
+BinPackParameters: false         # Keeps parameters on one line unless they exceed ColumnLimit
+# Modern clang-format 22 block-formatting options:
+AlignAfterOpenBracket: false     # Uses ContinuationIndentWidth instead of aligning to the '(' position
+BreakAfterOpenBracketFunction: true
+BreakBeforeCloseBracketFunction: true
