@@ -46,6 +46,8 @@ using explicit widget instantiation and a manual run-loop without templates:
 
 */
 int main() {
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(NULL);   
   // 1. Construct the widgets manually using constructors and addChild
   auto col1 = std::make_unique<Column>();
   col1->addChild(
@@ -138,12 +140,13 @@ int main() {
   WidgetTree tree(std::move(rootBox));
 
   for (;;) {
+    tools::alternateScreenBuffer();
     tools::cursorHomePosition();
     tree.fb.resizeBuffer();
     tree.layout(Rect{0, 0, tree.fb.row, tree.fb.col});
     tree.render();
     tree.display();
-    usleep(50000);
+    usleep(100000);
   }
 
   tools::visiableCursor();

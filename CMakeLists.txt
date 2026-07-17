@@ -20,8 +20,6 @@ add_executable(tui)
 target_sources(tui
   PRIVATE
     src/main.cpp
-    src/tools.cpp
-    src/unicode.cpp
 )
 
 # Add header search path

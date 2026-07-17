@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "tools.hpp"
 #include "unicode.hpp"
 
 enum class AnsiColor {
@@ -87,44 +88,52 @@ class frameBuffer {
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     row = w.ws_row;
     col = w.ws_col;
-    currentBuffer.resize(row * col);
-    previousBuffer.resize(row * col);
+    if (currentBuffer.size() != static_cast<size_t>(row * col)) {
+      currentBuffer.resize(row * col);
+      previousBuffer.resize(row * col);
+
+      tools::clearScreen();
+      std::fill(previousBuffer.begin(),previousBuffer.end(),Cell{});
+    }
     clear();
   }
 
   void setGlyph(int x, int y, char32_t glyph) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
     currentBuffer[y * col + x].glyph = glyph;
   }
   void setStyle(int x, int y, Style style) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
     currentBuffer[y * col + x].style = style;
   }
   void setColor(int x, int y, AnsiColor fg, AnsiColor bg) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
     currentBuffer[y * col + x].style.colour.fg = fg;
     currentBuffer[y * col + x].style.colour.bg = bg;
   }
   void setForegroundColor(int x, int y, AnsiColor fg) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
     currentBuffer[y * col + x].style.colour.fg = fg;
   }
   void setBackgroundColor(int x, int y, AnsiColor bg) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
     currentBuffer[y * col + x].style.colour.bg = bg;
   }
   void setCell(int x, int y, const Cell& NewCell) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
     currentBuffer[y * col + x] = NewCell;
   }
-  void setTextStyle(int index, TextStyle t) { currentBuffer[index].style.textStyle |= static_cast<int>(t); }
+  void setTextStyle(int x, int y, TextStyle t) {
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
+    currentBuffer[y * col + x].style.textStyle |= static_cast<int>(t);
+  }
   void removeTextStyle(int x, int y, TextStyle t) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
-    currentBuffer[x * col + y].style.textStyle &= ~static_cast<int>(t);
+    if (x < 0 || x >= col || y < 0 || y >= row) return;
+    currentBuffer[y * col + x].style.textStyle &= ~static_cast<int>(t);
   }
   bool hasTextStyle(int x, int y, TextStyle t) {
-    if (x < 0 || x >= col || y < 0 || y >= row) throw std::runtime_error("Out of bounds error");
-    return (currentBuffer[x * col + y].style.textStyle & static_cast<int>(t)) != 0;
+    if (x < 0 || x >= col || y < 0 || y >= row) return false;
+    return (currentBuffer[y * col + x].style.textStyle & static_cast<int>(t)) != 0;
   }
 
   void display() {
@@ -138,34 +147,33 @@ class frameBuffer {
     for (int j = 0; j < col; j++) {
       displayOutput += displayBufferPixel(row - 1, j);
     }
-    std::cout << displayOutput << std::endl;
+    std::cout << displayOutput << std::flush;
   }
 
   void incrementDisplay() {
     displayOutput.clear();
     bool previousDirty = false;
     for (int i = 0; i < row; i++) {
+      previousDirty = false;
       for (int j = 0; j < col; j++) {
         if (!compareCell(i, j)) {
           previousDirty = false;
           continue;
         }
-
         if (!previousDirty) {
           displayOutput += ESCAPE_SEQUENCE_ESC + "[" + std::to_string(i + 1) + ";" + std::to_string(j + 1) + "H";
         }
-
         displayOutput += displayBufferPixel(i, j);
         previousDirty = true;
       }
     }
     previousBuffer = currentBuffer;
-    std::cout << displayOutput << std::endl;
+    std::cout << displayOutput << std::flush;
   }
 
  protected:
   bool compareCell(int i, int j) {
-    if (i < 0 || i >= col || j < 0 || j >= row) throw std::runtime_error("Out of bounds error");
+    if (i < 0 || i >= row || j < 0 || j >= col) return false;
     int index = i * col + j;
     if (currentBuffer[index].glyph != previousBuffer[index].glyph) return true;
     if (currentBuffer[index].style.colour.fg != previousBuffer[index].style.colour.fg) return true;

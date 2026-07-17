@@ -18,7 +18,8 @@ public:
   }
 
   void display() {
-    fb.display();
+    //fb.display();
+    fb.incrementDisplay();
   }
 
   void setRoot(std::unique_ptr<Widget> r) { root = std::move(r); }
