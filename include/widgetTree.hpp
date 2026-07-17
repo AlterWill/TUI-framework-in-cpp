@@ -13,8 +13,8 @@ public:
       : root(std::move(rootContainer)) {
     rect.x = 0;
     rect.y = 0;
-    rect.width = fb.col;
-    rect.height = fb.row;
+    rect.width = fb.terminalData.col;
+    rect.height = fb.terminalData.row;
   }
 
   void display() {

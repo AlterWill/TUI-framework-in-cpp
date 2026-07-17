@@ -231,7 +231,7 @@ inline void run_app(Args&&... args) {
   for (;;) {
     tools::cursorHomePosition();
     tree.fb.resizeBuffer();
-    tree.layout({0, 0, tree.fb.row, tree.fb.col});
+    tree.layout({0, 0, static_cast<int>(tree.fb.terminalData.row), static_cast<int>(tree.fb.terminalData.col)});
     tree.render();
     tree.display();
     usleep(50000);

@@ -143,10 +143,10 @@ int main() {
     tools::alternateScreenBuffer();
     tools::cursorHomePosition();
     tree.fb.resizeBuffer();
-    tree.layout(Rect{0, 0, tree.fb.row, tree.fb.col});
+    tree.layout(Rect{0, 0, static_cast<int>(tree.fb.terminalData.row), static_cast<int>(tree.fb.terminalData.col)});
     tree.render();
     tree.display();
-    usleep(100000);
+    usleep(10000);
   }
 
   tools::visiableCursor();
