@@ -1,231 +1,228 @@
 # Roadmap
 
-The project is developed in phases. Each phase builds upon the previous one to create a stable and extensible TUI framework.
+The project is organized into milestones and phases. Each phase builds on the previous one to form a stable, extensible TUI framework.
 
 ---
 
-# Phase 1 — Core Foundation ✅
+# Milestone 1: MVP Runtime
 
-The basic architecture of the framework.
+*Goal: Render text, boxes, layouts, incremental redraw, and terminal resize handling.*
 
-- [x] Widget base class
-- [x] Widget tree
-- [x] Single-child widgets
-- [x] Multi-child widgets
-- [x] Layout pass
-- [x] Render pass
-- [x] Framebuffer
-- [x] UTF-8 rendering
-- [x] Declarative DSL
-- [x] Text widget
-- [x] Box widget
-- [x] Row layout
-- [x] Column layout
-- [x] Grid layout
-- [x] Margin support
-- [x] Padding support
+## Phase 1 — Core Engine ✅
 
----
+The foundation of the framework.
 
-# Phase 2 — Rendering Engine
+* [x] Widget base class
+* [x] Widget tree
+* [x] Single-child widgets
+* [x] Multi-child widgets
+* [x] Layout pass
+* [x] Render pass
+* [x] Framebuffer
+* [x] UTF-8 rendering
+* [x] Declarative DSL
+* [x] Text widget
+* [x] Box widget
+* [x] Row layout
+* [x] Column layout
+* [x] Grid layout
+* [x] Margin support
+* [x] Padding support
+
+## Phase 2 — Rendering Engine
 
 Improve how frames are produced and displayed.
 
-## Rendering Pipeline
+* [x] ANSI style output
+* [x] Incremental rendering
+* [x] Dirty cell tracking
+* [x] Double buffering
+* [ ] Clipping
+* [ ] Off-screen rendering
 
-- [ ] ANSI style output
-- [ ] Incremental rendering
-- [ ] Dirty cell tracking
-- [ ] Dirty rectangle tracking
-- [ ] Double buffering
-- [ ] Clipping
-- [ ] Viewports
-- [ ] Off-screen rendering
+### Terminal Backend
 
-## Terminal Backend
-
-- [ ] Automatic terminal resize detection
-- [ ] 256-color support
-- [ ] True-color support
-- [ ] Backend abstraction
+* [ ] 256-color support
+* [ ] True-color support
+* [ ] Backend abstraction
 
 ---
 
-# Phase 3 — Layout Engine
+# Milestone 2: Interactive Core
 
-Make layouts much more flexible.
+*Goal: Keyboard input, focus handling, flexible layouts, and theming.*
 
-## Containers
+## Phase 3 — Input System
 
-- [ ] Flex
-- [ ] Stack
-- [ ] Overlay
-- [ ] Scroll Container
-- [ ] Split Pane
+Everything related to user input and events.
 
-## Constraints
+* [ ] Keyboard input
+* [ ] Mouse input
+* [ ] Clipboard
+* [ ] Terminal resize events
 
-- [ ] Fixed size
-- [ ] Preferred size
-- [ ] Fill / Expand
-- [ ] Min / Max size
-- [ ] Percentage sizing
-- [ ] Child alignment
-- [ ] Layout caching
+### Event System
 
----
+* [ ] Event objects
+* [ ] Event dispatcher
+* [ ] Event propagation
+* [ ] Event bubbling
+* [ ] Event capture
 
-# Phase 4 — Input System
+### Focus System
 
-Everything related to user input.
+* [ ] Focus manager
+* [ ] Focus traversal
+* [ ] Tab navigation
+* [ ] Focus scopes
 
-- [ ] Keyboard input
-- [ ] Mouse input
-- [ ] Clipboard
-- [ ] Terminal resize events
+## Phase 4 — Layout Engine
 
-## Event System
+Make layouts more flexible and expressive.
 
-- [ ] Event objects
-- [ ] Event dispatcher
-- [ ] Event propagation
-- [ ] Event bubbling
-- [ ] Event capture
+### Containers
 
-## Focus System
+* [ ] Flex
+* [ ] Stack
+* [ ] Overlay
+* [ ] Viewports
+* [ ] Scroll container
+* [ ] Split pane
 
-- [ ] Focus manager
-- [ ] Focus traversal
-- [ ] Tab navigation
-- [ ] Focus scopes
+### Constraints
 
----
+* [ ] Fixed size
+* [ ] Preferred size
+* [ ] Fill / expand
+* [ ] Min / max size
+* [ ] Percentage sizing
+* [ ] Child alignment
 
-# Phase 5 — Styling System
+## Phase 5 — Styling System
 
 Move from per-widget styling to reusable themes.
 
-## Styles
+### Styles
 
-- [x] Per-widget style
+* [x] Per-widget style
 
-## Themes
+### Themes
 
-- [ ] Theme manager
-- [ ] Style inheritance
-- [ ] Theme switching
-- [ ] Global theme
+* [ ] Theme manager
+* [ ] Style inheritance
+* [ ] Theme switching
+* [ ] Global theme
 
-## Widget States
+### Widget States
 
-- [ ] Hover
-- [ ] Focused
-- [ ] Active
-- [ ] Disabled
-- [ ] Selected
+* [ ] Hover
+* [ ] Focused
+* [ ] Active
+* [ ] Disabled
+* [ ] Selected
 
-## Style System
+### Style System
 
-- [ ] Style classes
-- [ ] CSS-like selectors
-- [ ] State-dependent styles
+* [ ] Style classes
+* [ ] CSS-like selectors
+* [ ] State-dependent styles
 
 ---
 
-# Phase 6 — Basic Widgets
+# Milestone 3: Usable Widgets
+
+*Goal: A practical standard library of common TUI controls.*
+
+## Phase 6 — Basic Widgets
 
 Simple display widgets.
 
-- [ ] Spacer
-- [ ] Divider
-- [ ] Progress Bar
-- [ ] Spinner
-- [ ] Image (ASCII / Unicode)
+* [ ] Spacer
+* [ ] Divider
+* [ ] Progress bar
+* [ ] Spinner
 
----
-
-# Phase 7 — Interactive Widgets
+## Phase 7 — Interactive Widgets
 
 Widgets requiring events and focus.
 
-- [ ] Button
-- [ ] Checkbox
-- [ ] Radio Button
-- [ ] Toggle Switch
-- [ ] Slider
+* [ ] Button
+* [ ] Checkbox
+* [ ] Radio button
+* [ ] Toggle switch
+* [ ] Slider
 
----
-
-# Phase 8 — Input Widgets
+## Phase 8 — Input Widgets
 
 Editable controls.
 
-- [ ] TextInput
-- [ ] PasswordInput
-- [ ] TextArea
-- [ ] NumberInput
+* [ ] Text input
+* [ ] Password input
+* [ ] Text area
+* [ ] Number input
 
----
-
-# Phase 9 — Advanced Widgets
+## Phase 9 — Advanced Widgets
 
 Larger UI components.
 
-- [ ] ListView
-- [ ] Table
-- [ ] TreeView
-- [ ] Tabs
-- [ ] Menu
-- [ ] Status Bar
-- [ ] Toolbar
+* [ ] List view
+* [ ] Table
+* [ ] Tree view
+* [ ] Tabs
+* [ ] Menu
+* [ ] Status bar
+* [ ] Toolbar
+
+## Phase 10 — Dialogs
+
+Transient UI components.
+
+* [ ] Popup
+* [ ] Modal
+* [ ] Tooltip
+* [ ] Notification
+* [ ] Context menu
 
 ---
 
-# Phase 10 — Dialogs
+# Milestone 4: Polish
 
-Transient UI.
+*Goal: Performance, documentation, testing, and developer experience.*
 
-- [ ] Popup
-- [ ] Modal
-- [ ] Tooltip
-- [ ] Notification
-- [ ] Context Menu
-
----
-
-# Phase 11 — Performance
+## Phase 11 — Performance
 
 Improve runtime efficiency.
 
-- [ ] Dirty widget rendering
-- [ ] Layout caching
-- [ ] Render caching
-- [ ] Frame timing
-- [ ] Memory optimizations
+* [ ] Dirty widget rendering
+* [ ] Layout caching
+* [ ] Render caching
+* [ ] Frame timing
+* [ ] Memory optimizations
 
----
-
-# Phase 12 — Developer Experience
+## Phase 12 — Developer Experience
 
 Improve usability for library users and contributors.
 
-- [ ] Documentation
-- [ ] Example gallery
-- [ ] Unit tests
-- [ ] Benchmarks
-- [ ] CI/CD
-- [ ] Package manager support
-- [ ] Better compiler diagnostics
+* [ ] Documentation
+* [ ] Example gallery
+* [ ] Unit tests
+* [ ] Benchmarks
+* [ ] CI/CD
+* [ ] Package manager support
+* [ ] Better compiler diagnostics
 
 ---
 
-# Phase 13 — Long-Term Goals
+# Milestone 5: Long-Term Goals
 
-Future directions after the core framework is mature.
+*Goal: Future directions after the core framework is mature.*
 
-- [ ] Animation system
-- [ ] Async task integration
-- [ ] Virtualized ListView
-- [ ] Markdown renderer
-- [ ] Code editor widget
-- [ ] Canvas widget
+## Phase 13 — Future Vision
+
+* [ ] Image widget (ASCII / Unicode)
+* [ ] Animation system
+* [ ] Async task integration
+* [ ] Virtualized list view
+* [ ] Markdown renderer
+* [ ] Code editor widget
+* [ ] Canvas widget

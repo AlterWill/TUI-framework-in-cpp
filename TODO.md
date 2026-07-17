@@ -1,71 +1,53 @@
- I have created a comprehensive technical design plan artifact detailing how these rendering
-  pipeline features can be structured and implemented:
+# Next Steps Roadmap
 
-  • rendering_pipeline_design.md
-  ──────
+## How this TODO works
+This file contains the immediate, actionable next steps for your TUI framework. It is strictly ordered top-to-bottom. 
+1. **Pick a task**: Work down the list sequentially. Do not jump to a later phase (e.g., Viewports) before finishing its dependencies (e.g., Keyboard Input).
+2. **Meet the requirement**: Each task has a "Completion Requirement" (the definition of done). Once your code fulfills this requirement, the task is complete.
+3. **Update the Roadmap**: Check the corresponding `[ ]` box in `README.md` and move on to the next item!
 
-### What These Tasks Mean
+---
 
-  Here is an explanation of each item in Phase 2: Rendering Pipeline and how they apply to your TUI
-  framework:
+## 1. Finish Phase 2: Rendering Engine & Terminal Backend
 
-#### 1. ANSI Style Output
+### Clipping
+- **Goal**: Restrict drawing operations to a widget's boundary to prevent visual overflow.
+- **Completion Requirement**: A parent widget (or the frame buffer itself) enforces a rectangular bounding box. Any `setCell()` or `setGlyph()` calls made outside of this bounding box are safely ignored without throwing out-of-bounds errors.
 
-  Currently,  frameBuffer::display()  converts cell glyphs into raw UTF-8 text but ignores the
-  Cell.sytle  structure (colors, bold, etc.).
+### Backend Features (256-color & True-color)
+- **Goal**: Expand `AnsiColor` and terminal capabilities.
+- **Completion Requirement**: The `displayBufferPixel()` function can output `\x1b[38;5;...m` (256-color) and `\x1b[38;2;r;g;bm` (True-color RGB) ANSI escape sequences based on expanded color definitions. You have also abstracted raw `ioctl` calls into a Backend class.
 
-  • Meaning: Translating formatting properties ( fg ,  bg ,  bold ,  underline ,  italic ) into
-  ANSI escape sequences (e.g.,  \033[32;1m  for green bold) and appending them to the output string
-  so the terminal renders rich colors and formatted text.
+---
 
-#### 2. Incremental Rendering
+## 2. Start Phase 3: Input System (Milestone 2)
 
-  Currently, the entire screen's content is rebuilt and printed to the terminal on every tick of
-  the run loop.
+### Keyboard Input
+- **Goal**: Process raw user keystrokes.
+- **Completion Requirement**: The main application loop can asynchronously read bytes from `STDIN` (with the terminal set to raw mode) without blocking the render loop, successfully capturing standard keys, arrows, and modifiers.
 
-  • Meaning: Only printing the characters (and their styles) that have actually changed since the
-  last frame, and using cursor movement sequences (e.g.,  \033[Row;ColH ) to jump directly to those
-  modified cells. This drastically reduces CPU, memory usage, terminal bandwidth, and eliminates
-  screen flicker.
+### Terminal Resize Events
+- **Goal**: Detect when the terminal window changes size.
+- **Completion Requirement**: The framework listens for the `SIGWINCH` signal and automatically triggers a framebuffer resize and layout re-calculation.
 
-#### 3. Dirty Cell Tracking
+### Event Dispatcher
+- **Goal**: Propagate keyboard events to widgets.
+- **Completion Requirement**: Raw keystrokes are translated into `KeyEvent` objects and routed down the widget tree to the currently "focused" widget.
 
-  • Meaning: The underlying mechanism for incremental rendering. It compares the newly rendered
-  buffer to the previous frame's buffer cell-by-cell. Only cells that differ in glyph, colors, or
-  styles are marked as "dirty" and scheduled to be updated in the incremental render pass.
+---
 
-#### 4. Dirty Rectangle Tracking
+## 3. Start Phase 4: Layout Engine
 
-  • Meaning: An optimization step above cell tracking. If a single widget updates, instead of
-  generating a separate cursor jump command for every individual cell, the system groups changed
-  cells into rectangular bounding boxes and renders them as contiguous blocks.
+### Viewports & Scroll Container
+- **Goal**: Establish virtual windows for scrollable areas.
+- **Completion Requirement**: You can define a virtual canvas larger than the terminal window. A `ScrollContainer` widget applies this viewport, and you can test it by using your Keyboard Input system (arrow keys) to scroll up and down.
 
-#### 5. Double Buffering
+### Advanced Constraints
+- **Goal**: Add dynamic sizing capabilities.
+- **Completion Requirement**: Widgets can accept size configurations like Fill/Expand (taking up all remaining space) and Min/Max bounds.
 
-  • Meaning: Keeping two terminal buffers in memory:
-      1. A front buffer representing what the terminal is currently showing.
-      2. A back buffer where widgets currently write their new state.
-      Once all widgets have finished rendering to the back buffer, the differences between the two
-      are computed, written to stdout, and the back buffer is copied/swapped to the front buffer.
-
-#### 6. Clipping
-
-  • Meaning: Restricting drawing operations to a specific boundary. If a child widget attempts to
-  write to a coordinate outside its parent's boundaries (e.g. text spilling over a box border), the
-  framebuffer discards the write.
-
-#### 7. Viewports
-
-  • Meaning: Establishing a virtual window over a larger canvas (like a scrollable text area). The
-  viewport translates local coordinate drawing calls (like rendering line 50 of a document) into
-  the actual physical bounds on the screen (lines 5-15 of the terminal).
-
-#### 8. Off-screen Rendering
-
-  • Meaning: Drawing components to an independent, intermediate buffer instead of the main back
-  buffer. This is used for caching static/complex widgets (re-using the cached image without re-
-  rendering every frame), screenshots, or compositing layered popups/overlays.
-                                                                      1 artifact · /artifact to review
-
-Resume with -c (or command below):
-agy --conversation=f507a9f6-8172-4d11-a9f3-621607a33ad3
+### Flex & Stack Containers
+- **Goal**: Implement advanced layout components.
+- **Completion Requirement**: 
+  - **Flex**: Dynamically distributes space among children based on ratios.
+  - **Stack**: Allows widgets to be layered on top of each other on the Z-axis (e.g., for floating text or popups).
