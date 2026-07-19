@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "backend.hpp"
+#include "linux_backend.hpp"
 #include "cell.hpp"
 #include "tools.hpp"
 #include "unicode.hpp"
@@ -21,7 +21,7 @@ class frameBuffer {
   std::string displayOutput;
 
  public:
-  backend terminalData;
+  linux_backend terminalData;
 
   frameBuffer() {
     terminalData.findTerminalSize();
