@@ -9,58 +9,10 @@
 #include <string>
 #include <vector>
 
-#include "tools.hpp"
 #include "backend.hpp"
+#include "cell.hpp"
+#include "tools.hpp"
 #include "unicode.hpp"
-
-enum class AnsiColor {
-  Default,
-  Black = 30,
-  Red,
-  Green,
-  Yellow,
-  Blue,
-  Magenta,
-  Cyan,
-  White,
-  BrightBlack = 90,
-  BrightRed,
-  BrightGreen,
-  BrightYellow,
-  BrightBlue,
-  BrightMagenta,
-  BrightCyan,
-  BrightWhite
-};
-
-// clang-format off
-enum class TextStyle : uint8_t {
-  None          = 0,
-  Bold          = 1 << 0,
-  Dim           = 1 << 1,
-  Italic        = 1 << 2,
-  Underline     = 1 << 3,
-  Blink         = 1 << 4,
-  Reverse       = 1 << 5,
-  Hidden        = 1 << 6,
-  StrikeThrough = 1 << 7,
-};
-// clang-format on
-
-struct Colour {
-  AnsiColor fg = AnsiColor::Default;
-  AnsiColor bg = AnsiColor::Default;
-};
-
-struct Style {
-  Colour colour;
-  uint8_t textStyle = static_cast<uint8_t>(TextStyle::None);
-};
-
-struct Cell {
-  char32_t glyph = U' ';
-  Style style;
-};
 
 class frameBuffer {
   std::vector<Cell> currentBuffer;
@@ -73,9 +25,8 @@ class frameBuffer {
 
   frameBuffer() {
     terminalData.findTerminalSize();
-    
-    currentBuffer.resize(terminalData.row*terminalData.col, Cell{});
-    previousBuffer.resize(terminalData.row*terminalData.col, Cell{});
+    currentBuffer.resize(terminalData.row * terminalData.col, Cell{});
+    previousBuffer.resize(terminalData.row * terminalData.col, Cell{});
     displayOutput = "";
   }
 
@@ -84,12 +35,12 @@ class frameBuffer {
   void resizeBuffer() {
     displayOutput.clear();
     terminalData.findTerminalSize();
-    if (currentBuffer.size() != static_cast<size_t>(terminalData.row*terminalData.col)) {
-      currentBuffer.resize(terminalData.row*terminalData.col);
-      previousBuffer.resize(terminalData.row*terminalData.col);
+    if (currentBuffer.size() != static_cast<size_t>(terminalData.row * terminalData.col)) {
+      currentBuffer.resize(terminalData.row * terminalData.col);
+      previousBuffer.resize(terminalData.row * terminalData.col);
 
       tools::clearScreen();
-      std::fill(previousBuffer.begin(),previousBuffer.end(),Cell{});
+      std::fill(previousBuffer.begin(), previousBuffer.end(), Cell{});
     }
     clear();
   }
@@ -102,34 +53,9 @@ class frameBuffer {
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x].style = style;
   }
-  void setColor(size_t x, size_t y, AnsiColor fg, AnsiColor bg) {
-    if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x].style.colour.fg = fg;
-    currentBuffer[y * terminalData.col + x].style.colour.bg = bg;
-  }
-  void setForegroundColor(size_t x, size_t y, AnsiColor fg) {
-    if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x].style.colour.fg = fg;
-  }
-  void setBackgroundColor(size_t x, size_t y, AnsiColor bg) {
-    if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x].style.colour.bg = bg;
-  }
   void setCell(size_t x, size_t y, const Cell& NewCell) {
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x] = NewCell;
-  }
-  void setTextStyle(size_t x, size_t y, TextStyle t) {
-    if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x].style.textStyle |= static_cast<int>(t);
-  }
-  void removeTextStyle(size_t x, size_t y, TextStyle t) {
-    if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x].style.textStyle &= ~static_cast<int>(t);
-  }
-  bool hasTextStyle(size_t x, size_t y, TextStyle t) {
-    if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return false;
-    return (currentBuffer[y * terminalData.col + x].style.textStyle & static_cast<int>(t)) != 0;
   }
 
   void display() {
@@ -168,12 +94,14 @@ class frameBuffer {
   }
 
  protected:
+  bool compareColour(Colour a, Colour b) { return static_cast<uint32_t>(a.colour) == static_cast<uint32_t>(b.colour); }
+
   bool compareCell(size_t i, size_t j) {
     if (i < 0 || i >= terminalData.row || j < 0 || j >= terminalData.col) return false;
     int index = i * terminalData.col + j;
     if (currentBuffer[index].glyph != previousBuffer[index].glyph) return true;
-    if (currentBuffer[index].style.colour.fg != previousBuffer[index].style.colour.fg) return true;
-    if (currentBuffer[index].style.colour.bg != previousBuffer[index].style.colour.bg) return true;
+    if (compareColour(currentBuffer[index].style.colours.fg, previousBuffer[index].style.colours.fg)) return true;
+    if (compareColour(currentBuffer[index].style.colours.bg, previousBuffer[index].style.colours.bg)) return true;
     if (currentBuffer[index].style.textStyle != previousBuffer[index].style.textStyle) return true;
     return false;
   }
@@ -192,13 +120,26 @@ class frameBuffer {
       }
     }
 
-    if (currentBuffer[index].style.colour.bg != AnsiColor::Default) {
-      needReset = true;
-      sgr.push_back(std::to_string(static_cast<int>(currentBuffer[index].style.colour.bg) + 10));
+    // ESC[38;2;{r};{g};{b}m
+    if (currentBuffer[index].style.colours.fg.getAlpha() > 0) {
+      //clang-format off
+      pixelOutput += ESCAPE_SEQUENCE_ESC + "[38;2;" +
+                     std::to_string(currentBuffer[index].style.colours.fg.getRedValue()) + ";" +
+                     std::to_string(currentBuffer[index].style.colours.fg.getGreenValue()) + ";" +
+                     std::to_string(currentBuffer[index].style.colours.fg.getBlueValue()) + "m";
+    } else {
+      pixelOutput += ESCAPE_SEQUENCE_ESC + "[39m";
     }
-    if (currentBuffer[index].style.colour.fg != AnsiColor::Default) {
-      needReset = true;
-      sgr.push_back(std::to_string(static_cast<int>(currentBuffer[index].style.colour.fg)));
+
+    // ESC[48;2;{r};{g};{b}m
+    if (currentBuffer[index].style.colours.bg.getAlpha() > 0) {
+      pixelOutput += ESCAPE_SEQUENCE_ESC + "[48;2;" +
+                     std::to_string(currentBuffer[index].style.colours.bg.getRedValue()) + ";" +
+                     std::to_string(currentBuffer[index].style.colours.bg.getGreenValue()) + ";" +
+                     std::to_string(currentBuffer[index].style.colours.bg.getBlueValue()) + "m";
+      //clang-format on
+    } else {
+      pixelOutput += ESCAPE_SEQUENCE_ESC + "[49m";
     }
 
     if (needReset) {

@@ -31,40 +31,43 @@ class Box : public SingleChildWidget {
  public:
   boxOutlineDetails outline;
   int borderSize{1};
-  Colour colour;
+  // no idea what to do with Background Colour
+  ColourPair colours;
 
-  Box(std::unique_ptr<Widget> mainChild, boxOutlineDetails o = boxStyle::light, Colour c = {}, int b = 1)
-      : SingleChildWidget(std::move(mainChild)), outline(o), borderSize(b), colour(c) {}
+  Box(std::unique_ptr<Widget> mainChild, boxOutlineDetails o = boxStyle::light,ColourPair c = ColourPair{}, int b = 1)
+      : SingleChildWidget(std::move(mainChild)), outline(o), borderSize(b),colours(c)  {}
 
   void drawBorder(frameBuffer& fb) {
     if (rect.width < 2 || rect.height < 2) return;
     int right = rect.x + rect.width - 1;
     int bottom = rect.y + rect.height - 1;
-    fb.setGlyph(rect.x, rect.y, outline.topLeft);
-    fb.setForegroundColor(rect.x, rect.y, colour.fg);
-    fb.setGlyph(right, rect.y, outline.topRight);
-    fb.setForegroundColor(right, rect.y, colour.fg);
-    fb.setGlyph(rect.x, bottom, outline.bottomLeft);
-    fb.setForegroundColor(rect.x, bottom, colour.fg);
-    fb.setGlyph(right, bottom, outline.bottomRight);
-    fb.setForegroundColor(right, bottom, colour.fg);
+    Cell borderCell;
+    borderCell.setColour(colours);
+    borderCell.setGlyph(outline.topLeft);
+    fb.setCell(rect.x, rect.y, borderCell);
+    borderCell.setGlyph(outline.topRight);
+    fb.setCell(right, rect.y, borderCell);
+    borderCell.setGlyph(outline.bottomLeft);
+    fb.setCell(rect.x, bottom,borderCell);
+    borderCell.setGlyph(outline.bottomRight);
+    fb.setCell(right, bottom, borderCell);
 
+    borderCell.setGlyph(outline.horizontal);
     for (int x = rect.x + 1; x < right; x++) {
-      fb.setGlyph(x, rect.y, outline.horizontal);
-      fb.setForegroundColor(x, rect.y, colour.fg);
-      fb.setGlyph(x, bottom, outline.horizontal);
-      fb.setForegroundColor(x, bottom, colour.fg);
+      fb.setCell(x, rect.y, borderCell);
+      fb.setCell(x, bottom, borderCell);
     }
+    borderCell.setGlyph(outline.vertical);
     for (int y = rect.y + 1; y < bottom; y++) {
-      fb.setGlyph(rect.x, y, outline.vertical);
-      fb.setForegroundColor(rect.x, y, colour.fg);
-      fb.setGlyph(right, y, outline.vertical);
-      fb.setForegroundColor(right, y, colour.fg);
+      fb.setCell(rect.x, y, borderCell);
+      fb.setCell(right, y, borderCell);
     }
 
+    Cell bgCell;
+    bgCell.setBackgroundColour(colours.getBackgroundColour());
     for (int x = rect.x + 1; x < right; x++) {
       for (int y = rect.y + 1; y < bottom; y++) {
-        fb.setBackgroundColor(x, y, colour.bg);
+        fb.setCell(x, y, bgCell);
       }
     }
   }

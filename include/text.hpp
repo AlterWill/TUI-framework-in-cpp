@@ -25,6 +25,8 @@ class Text : public Widget {
 
   void setStyle(Style s) { style = std::move(s); }
 
+  void setColourPair(ColourPair c) { style.colours = std::move(c); }
+
   void setAlignment(Alignment a) { alignment = a; }
 
   void layout() override {};
