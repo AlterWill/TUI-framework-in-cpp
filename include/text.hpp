@@ -34,7 +34,7 @@ class Text : public Widget {
   void render(frameBuffer& fb) override {
     std::vector<std::string> lines = convertStringToParagraph(text, rect.width);
 
-    for (int i = 0; i < rect.height && i < static_cast<int>(lines.size()); i++) {
+    for (int i = 0; i < static_cast<int>(rect.height) && i < static_cast<int>(lines.size()); i++) {
       const std::string& line = lines[i];
       int lineLen = line.length();
 
@@ -44,7 +44,7 @@ class Text : public Widget {
       } else if (alignment == Alignment::center) {
         xOffset = rect.x + (rect.width - lineLen) / 2;
       }
-      for (int j = 0; j < rect.width && j < lineLen; j++) {
+      for (int j = 0; j < static_cast<int>(rect.width) && j < lineLen; j++) {
         fb.setGlyph(xOffset + j, rect.y + i, line[j]);
         fb.setStyle(xOffset + j, rect.y + i, style);
       }

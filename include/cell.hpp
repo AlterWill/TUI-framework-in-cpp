@@ -4,6 +4,10 @@ struct Cell {
   char32_t glyph = U' ';
   Style style;
 
+  void setCell(Cell c){
+    glyph = c.glyph;
+    style = c.style;
+  }
   void setGlyph(char32_t g){
     glyph = g;
   }

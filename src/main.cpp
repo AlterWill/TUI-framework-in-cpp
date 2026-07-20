@@ -117,26 +117,30 @@ int main() {
   auto rootBox = std::make_unique<Box>(std::move(gridContainer), boxStyle::light, ColourPair{.fg = NamedColour::White});
 
   // --- RUN APP ---
+  tools::alternateScreenBuffer();
   tools::invisiableCursor();
   tools::clearScreen();
 
   WidgetTree tree(std::move(rootBox));
 
-  // Note: Press Ctrl+C to exit. A proper TUI would read input here.
-  for (;;) { // Loop limit so it doesn't run forever in testing
-    tools::alternateScreenBuffer();
+  bool running = true;
+  while (running) {
     tools::cursorHomePosition();
     tree.fb.resizeBuffer();
     
     // Layout and render
-    tree.layout(Rect{0, 0, static_cast<int>(tree.fb.terminalData.row), static_cast<int>(tree.fb.terminalData.col)});
+    tree.layout(Rect{0, 0, static_cast<size_t>(tree.fb.terminalData.row), static_cast<size_t>(tree.fb.terminalData.col)});
     tree.render();
     tree.display();
     
-    usleep(50000); // 50ms delay
+    int key = tree.fb.terminalData.readKey();
+    if (key == 'q' || key == 'Q' || key == '\x1b') {
+      running = false;
+    }
   }
 
   tools::visiableCursor();
   tools::clearScreen();
+  std::cout << "\x1b[?1049l" << std::flush;
   return 0;
 }

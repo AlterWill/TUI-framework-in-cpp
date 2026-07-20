@@ -9,8 +9,8 @@ class Column : public MultiChildWidget {
       return;
     }
 
-    int usableWidth = std::max(0, rect.width - padding.left - padding.right);
-    int usableHeight = std::max(0, rect.height - padding.top - padding.bottom);
+    int usableWidth = std::max(0, static_cast<int>(rect.width) - padding.left - padding.right);
+    int usableHeight = std::max(0, static_cast<int>(rect.height) - padding.top - padding.bottom);
     int startX = rect.x + padding.left;
     int startY = rect.y + padding.top;
 

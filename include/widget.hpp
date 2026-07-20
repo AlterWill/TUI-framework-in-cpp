@@ -2,10 +2,10 @@
 
 #include "frameBuffer.hpp"
 struct Rect {
-  int x{};
-  int y{};
-  int height{};
-  int width{};
+  size_t x{};
+  size_t y{};
+  size_t height{};
+  size_t width{};
 };
 
 struct Insets {
@@ -24,12 +24,20 @@ struct Insets {
 class Widget {
 public:
   Rect rect;
+  Rect clip;
   Widget *parent = nullptr;
 
   Insets padding;
   Insets margin;
 
-  void setPadding(Insets p) { padding = p; }
+  void setClip(){
+    clip.height = rect.height - padding.top -padding.bottom;
+    clip.width = rect.width - padding.right -padding.left;
+    clip.x = rect.x + padding.left;
+    clip.y = rect.y + padding.top;
+  }
+
+  void setPadding(Insets p) { padding = p;setClip(); }
 
   void setMargin(Insets m) { margin = m; }
 

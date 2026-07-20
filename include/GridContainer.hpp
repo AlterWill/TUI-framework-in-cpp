@@ -24,9 +24,9 @@ class Grid : public MultiChildWidget {
     }
 
     int childWidth =
-        std::max(0, rect.width - padding.right - padding.left) / columns;
+        std::max(0, static_cast<int>(rect.width) - padding.right - padding.left) / columns;
     int childHeight =
-        std::max(0, rect.height - padding.top - padding.bottom) / rows;
+        std::max(0, static_cast<int>(rect.height) - padding.top - padding.bottom) / rows;
     int startX = rect.x + padding.left;
     int startY = rect.y + padding.top;
 
