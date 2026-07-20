@@ -56,7 +56,7 @@ Improve how frames are produced and displayed.
 
 Everything related to user input and events.
 
-* [ ] Keyboard input
+* [x] Keyboard input
 * [ ] Mouse input
 * [ ] Clipboard
 * [ ] Terminal resize events
