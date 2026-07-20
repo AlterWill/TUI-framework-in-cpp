@@ -28,7 +28,6 @@ inline constexpr boxOutlineDetails ascii = {U'-', U'|', U'+', U'+', U'+', U'+'};
 
 class Box : public SingleChildWidget {
  public:
-  std::vector<Cell> buffer;
   boxOutlineDetails outline;
   int borderSize{1};
   // no idea what to do with Background Colour
@@ -37,56 +36,50 @@ class Box : public SingleChildWidget {
   Box(std::unique_ptr<Widget> mainChild, boxOutlineDetails o = boxStyle::light, ColourPair c = ColourPair{}, int b = 1)
       : SingleChildWidget(std::move(mainChild)), outline(o), borderSize(b), colours(c) {}
 
-  void drawBorder() {
+  void drawBorder(frameBuffer& fb) {
     if (rect.width < 2 || rect.height < 2) return;
-    if (buffer.size() != rect.height * rect.width) {
-      buffer.resize(rect.height * rect.width);
-    }
-    size_t right = rect.width - 1;
-    size_t bottom = rect.width * (rect.height - 1);
+    
+    size_t right = rect.x + rect.width - 1;
+    size_t bottom = rect.y + rect.height - 1;
+    
     Cell borderCell;
     borderCell.setColour(colours);
+    
     borderCell.setGlyph(outline.topLeft);
-    buffer[0].setCell(borderCell);
+    fb.setCell(rect.x, rect.y, borderCell, clip);
+    
     borderCell.setGlyph(outline.topRight);
-    buffer[right].setCell(borderCell);
+    fb.setCell(right, rect.y, borderCell, clip);
+    
     borderCell.setGlyph(outline.bottomLeft);
-    buffer[bottom].setCell(borderCell);
+    fb.setCell(rect.x, bottom, borderCell, clip);
+    
     borderCell.setGlyph(outline.bottomRight);
-    buffer[bottom + right].setCell(borderCell);
+    fb.setCell(right, bottom, borderCell, clip);
 
     borderCell.setGlyph(outline.horizontal);
-    for (size_t x = 1; x < right; x++) {
-      buffer[x].setCell(borderCell);
-      buffer[bottom + x].setCell(borderCell);
+    for (size_t x = rect.x + 1; x < right; x++) {
+      fb.setCell(x, rect.y, borderCell, clip);
+      fb.setCell(x, bottom, borderCell, clip);
     }
+    
     borderCell.setGlyph(outline.vertical);
-    for (size_t y = 1; y < rect.height - 1; y++) {
-      buffer[y * rect.width].setCell(borderCell);
-
-      buffer[(y * rect.width) + right].setCell(borderCell);
+    for (size_t y = rect.y + 1; y < bottom; y++) {
+      fb.setCell(rect.x, y, borderCell, clip);
+      fb.setCell(right, y, borderCell, clip);
     }
 
     Cell bgCell;
     bgCell.setBackgroundColour(colours.getBackgroundColour());
-    for (size_t x = 1; x < right; x++) {
-      for (size_t y = 1; y < rect.height - 1; y++) {
-        buffer[(y * rect.width) + x].setCell(bgCell);
-      }
-    }
-  }
-
-  void passBuffer(frameBuffer& fb) {
-    for (size_t x = rect.x; x < rect.width + rect.x; x++) {
-      for (size_t y = rect.y; y < rect.height + rect.y; y++) {
-        fb.setCell(x, y, buffer[((y - rect.y) * rect.width) + (x - rect.x)]);
+    for (size_t x = rect.x + 1; x < right; x++) {
+      for (size_t y = rect.y + 1; y < bottom; y++) {
+        fb.setCell(x, y, bgCell, clip);
       }
     }
   }
 
   void render(frameBuffer& fb) override {
-    drawBorder();
-    passBuffer(fb);
+    drawBorder(fb);
     if (child) {
       child->render(fb);
     }

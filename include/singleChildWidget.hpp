@@ -1,6 +1,7 @@
 #pragma once
 
 #include "widget.hpp"
+#include "frameBuffer.hpp"
 #include <memory>
 
 class SingleChildWidget : public Widget {

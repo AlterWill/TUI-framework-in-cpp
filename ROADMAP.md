@@ -37,14 +37,14 @@ Improve how frames are produced and displayed.
 * [x] Incremental rendering
 * [x] Dirty cell tracking
 * [x] Double buffering
-* [ ] Clipping
+* [x] Clipping
 * [ ] Off-screen rendering
 
 ### Terminal Backend
 
-* [ ] 256-color support
-* [ ] True-color support
-* [ ] Backend abstraction
+* [x] 256-color support
+* [x] True-color support
+* [x] Backend abstraction
 
 ---
 

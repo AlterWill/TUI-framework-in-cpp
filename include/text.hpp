@@ -45,8 +45,8 @@ class Text : public Widget {
         xOffset = rect.x + (rect.width - lineLen) / 2;
       }
       for (int j = 0; j < static_cast<int>(rect.width) && j < lineLen; j++) {
-        fb.setGlyph(xOffset + j, rect.y + i, line[j]);
-        fb.setStyle(xOffset + j, rect.y + i, style);
+        fb.setGlyph(xOffset + j, rect.y + i, line[j], clip);
+        fb.setStyle(xOffset + j, rect.y + i, style, clip);
       }
     }
   };

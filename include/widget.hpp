@@ -1,25 +1,9 @@
 #pragma once
 
+#include "rect.hpp"
+#include "insets.hpp"
 #include "frameBuffer.hpp"
-struct Rect {
-  size_t x{};
-  size_t y{};
-  size_t height{};
-  size_t width{};
-};
 
-struct Insets {
-  int top{};
-  int bottom{};
-  int right{};
-  int left{};
-
-  static constexpr Insets all(int value) {
-    return {value, value, value, value};
-  }
-
-  static constexpr Insets symmetric(int x, int y) { return {y, y, x, x}; }
-};
 
 class Widget {
 public:
@@ -46,6 +30,7 @@ public:
     rect.y = y;
     rect.height = height;
     rect.width = width;
+    setClip();
   }
 
   virtual void render(frameBuffer &fb) = 0;

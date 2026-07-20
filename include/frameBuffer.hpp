@@ -13,6 +13,7 @@
 #include "cell.hpp"
 #include "tools.hpp"
 #include "unicode.hpp"
+#include "rect.hpp"
 
 class frameBuffer {
   std::vector<Cell> currentBuffer;
@@ -45,15 +46,18 @@ class frameBuffer {
     clear();
   }
 
-  void setGlyph(size_t x, size_t y, char32_t glyph) {
+  void setGlyph(size_t x, size_t y, char32_t glyph, const Rect& clip) {
+    if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x].glyph = glyph;
   }
-  void setStyle(size_t x, size_t y, Style style) {
+  void setStyle(size_t x, size_t y, Style style, const Rect& clip) {
+    if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x].style = style;
   }
-  void setCell(size_t x, size_t y, const Cell& NewCell) {
+  void setCell(size_t x, size_t y, const Cell& NewCell, const Rect& clip) {
+    if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x] = NewCell;
   }
@@ -120,24 +124,52 @@ class frameBuffer {
       }
     }
 
-    // ESC[38;2;{r};{g};{b}m
+    // Foreground Color
     if (currentBuffer[index].style.colours.fg.getAlpha() > 0) {
-      //clang-format off
-      pixelOutput += ESCAPE_SEQUENCE_ESC + "[38;2;" +
-                     std::to_string(currentBuffer[index].style.colours.fg.getRedValue()) + ";" +
-                     std::to_string(currentBuffer[index].style.colours.fg.getGreenValue()) + ";" +
-                     std::to_string(currentBuffer[index].style.colours.fg.getBlueValue()) + "m";
+      if (terminalData.supportsTrueColor) {
+        // ESC[38;2;{r};{g};{b}m
+        pixelOutput += ESCAPE_SEQUENCE_ESC + "[38;2;" +
+                       std::to_string(currentBuffer[index].style.colours.fg.getRedValue()) + ";" +
+                       std::to_string(currentBuffer[index].style.colours.fg.getGreenValue()) + ";" +
+                       std::to_string(currentBuffer[index].style.colours.fg.getBlueValue()) + "m";
+      } else if (terminalData.supports256Color) {
+        // ESC[38;5;{id}m
+        pixelOutput += ESCAPE_SEQUENCE_ESC + "[38;5;" + 
+                       std::to_string(currentBuffer[index].style.colours.fg.to256Palette()) + "m";
+      } else {
+        // 16-color fallback
+        uint8_t colorIndex = currentBuffer[index].style.colours.fg.to16Palette();
+        if (colorIndex < 8) {
+          pixelOutput += ESCAPE_SEQUENCE_ESC + "[" + std::to_string(30 + colorIndex) + "m";
+        } else {
+          pixelOutput += ESCAPE_SEQUENCE_ESC + "[" + std::to_string(90 + (colorIndex - 8)) + "m";
+        }
+      }
     } else {
       pixelOutput += ESCAPE_SEQUENCE_ESC + "[39m";
     }
 
-    // ESC[48;2;{r};{g};{b}m
+    // Background Color
     if (currentBuffer[index].style.colours.bg.getAlpha() > 0) {
-      pixelOutput += ESCAPE_SEQUENCE_ESC + "[48;2;" +
-                     std::to_string(currentBuffer[index].style.colours.bg.getRedValue()) + ";" +
-                     std::to_string(currentBuffer[index].style.colours.bg.getGreenValue()) + ";" +
-                     std::to_string(currentBuffer[index].style.colours.bg.getBlueValue()) + "m";
-      //clang-format on
+      if (terminalData.supportsTrueColor) {
+        // ESC[48;2;{r};{g};{b}m
+        pixelOutput += ESCAPE_SEQUENCE_ESC + "[48;2;" +
+                       std::to_string(currentBuffer[index].style.colours.bg.getRedValue()) + ";" +
+                       std::to_string(currentBuffer[index].style.colours.bg.getGreenValue()) + ";" +
+                       std::to_string(currentBuffer[index].style.colours.bg.getBlueValue()) + "m";
+      } else if (terminalData.supports256Color) {
+        // ESC[48;5;{id}m
+        pixelOutput += ESCAPE_SEQUENCE_ESC + "[48;5;" + 
+                       std::to_string(currentBuffer[index].style.colours.bg.to256Palette()) + "m";
+      } else {
+        // 16-color fallback
+        uint8_t colorIndex = currentBuffer[index].style.colours.bg.to16Palette();
+        if (colorIndex < 8) {
+          pixelOutput += ESCAPE_SEQUENCE_ESC + "[" + std::to_string(40 + colorIndex) + "m";
+        } else {
+          pixelOutput += ESCAPE_SEQUENCE_ESC + "[" + std::to_string(100 + (colorIndex - 8)) + "m";
+        }
+      }
     } else {
       pixelOutput += ESCAPE_SEQUENCE_ESC + "[49m";
     }
