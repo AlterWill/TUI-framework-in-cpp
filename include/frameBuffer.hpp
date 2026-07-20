@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "linux_backend.hpp"
 #include "cell.hpp"
+#include "backend.hpp"
 #include "tools.hpp"
 #include "unicode.hpp"
 #include "rect.hpp"
@@ -22,9 +22,9 @@ class frameBuffer {
   std::string displayOutput;
 
  public:
-  linux_backend terminalData;
+  backend& terminalData;
 
-  frameBuffer() {
+  frameBuffer(backend& terminal) : terminalData(terminal) {
     terminalData.findTerminalSize();
     currentBuffer.resize(terminalData.row * terminalData.col, Cell{});
     previousBuffer.resize(terminalData.row * terminalData.col, Cell{});
@@ -63,6 +63,7 @@ class frameBuffer {
   }
 
   void display() {
+    if(terminalData.row == 0 || terminalData.col == 0) return;
     displayOutput.clear();
     for (size_t i = 0; i < terminalData.row - 1; i++) {
       for (size_t j = 0; j < terminalData.col; j++) {
@@ -104,8 +105,8 @@ class frameBuffer {
     if (i < 0 || i >= terminalData.row || j < 0 || j >= terminalData.col) return false;
     int index = i * terminalData.col + j;
     if (currentBuffer[index].glyph != previousBuffer[index].glyph) return true;
-    if (compareColour(currentBuffer[index].style.colours.fg, previousBuffer[index].style.colours.fg)) return true;
-    if (compareColour(currentBuffer[index].style.colours.bg, previousBuffer[index].style.colours.bg)) return true;
+    if (!compareColour(currentBuffer[index].style.colours.fg, previousBuffer[index].style.colours.fg)) return true;
+    if (!compareColour(currentBuffer[index].style.colours.bg, previousBuffer[index].style.colours.bg)) return true;
     if (currentBuffer[index].style.textStyle != previousBuffer[index].style.textStyle) return true;
     return false;
   }

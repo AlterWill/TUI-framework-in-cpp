@@ -1,20 +1,22 @@
 #pragma once
 
 #include "widget.hpp"
+#include "backend.hpp"
 #include <memory>
 
 class WidgetTree {
 public:
   std::unique_ptr<Widget> root;
   Rect rect;
+  backend& terminal;
   frameBuffer fb;
 
-  WidgetTree(std::unique_ptr<Widget> rootContainer)
-      : root(std::move(rootContainer)) {
+  WidgetTree(std::unique_ptr<Widget> rootContainer,backend& t)
+      : root(std::move(rootContainer)), terminal(t), fb(terminal) {
     rect.x = 0;
     rect.y = 0;
-    rect.width = fb.terminalData.col;
-    rect.height = fb.terminalData.row;
+    rect.width = terminal.col;
+    rect.height = terminal.row;
   }
 
   void display() {

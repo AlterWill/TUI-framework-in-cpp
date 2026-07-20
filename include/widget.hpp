@@ -15,8 +15,8 @@ public:
   Insets margin;
 
   void setClip(){
-    clip.height = rect.height - padding.top -padding.bottom;
-    clip.width = rect.width - padding.right -padding.left;
+    clip.height = std::max(rect.height - padding.top -padding.bottom,static_cast<std::size_t>(0));
+    clip.width = std::max(rect.width - padding.right -padding.left,static_cast<size_t>(0));
     clip.x = rect.x + padding.left;
     clip.y = rect.y + padding.top;
   }
