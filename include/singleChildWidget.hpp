@@ -14,6 +14,15 @@ public:
     }
   }
 
+  size_t childrenSize(){
+    return (child)? 1 : 0;
+  }
+
+  std::vector<Widget*> getChildren() override{
+    if(child) return { child.get() };
+    return {};
+  }
+
   void setChild(std::unique_ptr<Widget> c) {
     child = std::move(c);
     child->parent = this;

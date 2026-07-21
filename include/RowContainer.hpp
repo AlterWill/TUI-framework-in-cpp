@@ -8,13 +8,15 @@ public:
 
   Row(std::vector<std::unique_ptr<Widget>> c) { children = std::move(c); }
 
+  virtual bool handleEvent(const Event& e) override { return false;};
+
   void setRectForChildren() override {
     if (children.empty()) {
       return;
     }
 
-    int usableWidth = std::max(0, rect.width - padding.left - padding.right);
-    int usableHeight = std::max(0, rect.height - padding.top - padding.bottom);
+    int usableWidth = std::max(0, static_cast<int>(rect.width - padding.left - padding.right));
+    int usableHeight = std::max(0, static_cast<int>(rect.height - padding.top - padding.bottom));
     int startX = rect.x + padding.left;
     int startY = rect.y + padding.top;
 

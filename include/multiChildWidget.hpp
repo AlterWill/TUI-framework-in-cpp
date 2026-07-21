@@ -8,18 +8,28 @@
 enum class LayoutType { Row, Column, Grid };
 
 class MultiChildWidget : public Widget {
-public:
+ public:
   std::vector<std::unique_ptr<Widget>> children;
 
-  void render(frameBuffer &fb) override {
-    for (auto &child : children) {
+  void render(frameBuffer& fb) override {
+    for (auto& child : children) {
       child->render(fb);
     }
   }
 
+  size_t childrenSize() { return children.size(); }
+
+  std::vector<Widget*> getChildren() override {
+    std::vector<Widget*> result;
+    for (auto& child : children) {
+      result.push_back(child.get());
+    }
+    return result;
+  }
+
   void layout() override {
     setRectForChildren();
-    for (auto &child : children) {
+    for (auto& child : children) {
       child->layout();
     }
   };

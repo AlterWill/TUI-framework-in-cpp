@@ -4,6 +4,8 @@
 
 class Column : public MultiChildWidget {
  public:
+  virtual bool handleEvent(const Event& e) override { return false;};
+
   void setRectForChildren() override {
     if (children.empty()) {
       return;

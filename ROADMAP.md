@@ -67,7 +67,7 @@ Everything related to user input and events.
 * [ ] Event dispatcher
 * [ ] Event propagation
 * [ ] Event bubbling
-* [ ] Event capture
+> * [ ] Event capture
 
 ### Focus System
 

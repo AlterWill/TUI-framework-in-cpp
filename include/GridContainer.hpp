@@ -9,6 +9,8 @@ class Grid : public MultiChildWidget {
 
   Grid(int row, int col) : rows(row), columns(col) {}
 
+  virtual bool handleEvent(const Event& e) override { return false;};
+
   void setRowCol(int row, int col) {
     rows = row;
     columns = col;
@@ -23,10 +25,8 @@ class Grid : public MultiChildWidget {
       return;
     }
 
-    int childWidth =
-        std::max(0, static_cast<int>(rect.width) - padding.right - padding.left) / columns;
-    int childHeight =
-        std::max(0, static_cast<int>(rect.height) - padding.top - padding.bottom) / rows;
+    int childWidth = std::max(0, static_cast<int>(rect.width) - padding.right - padding.left) / columns;
+    int childHeight = std::max(0, static_cast<int>(rect.height) - padding.top - padding.bottom) / rows;
     int startX = rect.x + padding.left;
     int startY = rect.y + padding.top;
 
@@ -41,10 +41,8 @@ class Grid : public MultiChildWidget {
       int x = startX + c * childWidth;
       int y = startY + r * childHeight;
 
-      int w = (c == columns - 1) ? (rect.width - c * childWidth)
-                                 : childWidth - padding.right;
-      int h = (r == rows - 1) ? (rect.height - r * childHeight)
-                              : childHeight - padding.left;
+      int w = (c == columns - 1) ? (rect.width - c * childWidth) : childWidth - padding.right;
+      int h = (r == rows - 1) ? (rect.height - r * childHeight) : childHeight - padding.left;
 
       children[i]->setRect(x, y, h, w);
     }
