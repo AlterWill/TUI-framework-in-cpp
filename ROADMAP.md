@@ -38,7 +38,7 @@ Improve how frames are produced and displayed.
 * [x] Dirty cell tracking
 * [x] Double buffering
 * [x] Clipping
-* [ ] Off-screen rendering
+> * [ ] Off-screen rendering
 
 ### Terminal Backend
 
@@ -57,9 +57,9 @@ Improve how frames are produced and displayed.
 Everything related to user input and events.
 
 * [x] Keyboard input
-* [ ] Mouse input
-* [ ] Clipboard
-* [ ] Terminal resize events
+* [x] Mouse input
+> * [ ] Clipboard
+> * [ ] Terminal resize events
 
 ### Event System
 
