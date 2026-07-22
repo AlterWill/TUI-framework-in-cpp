@@ -17,7 +17,7 @@ class MultiChildWidget : public Widget {
     }
   }
 
-  size_t childrenSize() { return children.size(); }
+  std::size_t childrenSize() { return children.size(); }
 
   std::vector<Widget*> getChildren() override {
     std::vector<Widget*> result;
@@ -42,7 +42,7 @@ class MultiChildWidget : public Widget {
     children.push_back(std::move(widget));
   }
 
-  void removeChild(size_t index) {
+  void removeChild(std::size_t index) {
     if (index < children.size()) {
       children.erase(children.begin() + index);
     }

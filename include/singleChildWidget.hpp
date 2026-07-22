@@ -14,7 +14,7 @@ public:
     }
   }
 
-  size_t childrenSize(){
+  std::size_t childrenSize(){
     return (child)? 1 : 0;
   }
 

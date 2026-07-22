@@ -36,7 +36,7 @@ class frameBuffer {
   void resizeBuffer() {
     displayOutput.clear();
     terminalData.findTerminalSize();
-    if (currentBuffer.size() != static_cast<size_t>(terminalData.row * terminalData.col)) {
+    if (currentBuffer.size() != static_cast<std::size_t>(terminalData.row * terminalData.col)) {
       currentBuffer.resize(terminalData.row * terminalData.col);
       previousBuffer.resize(terminalData.row * terminalData.col);
 
@@ -46,17 +46,17 @@ class frameBuffer {
     clear();
   }
 
-  void setGlyph(size_t x, size_t y, char32_t glyph, const Rect& clip) {
+  void setGlyph(std::size_t x, std::size_t y, char32_t glyph, const Rect& clip) {
     if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x].glyph = glyph;
   }
-  void setStyle(size_t x, size_t y, Style style, const Rect& clip) {
+  void setStyle(std::size_t x, std::size_t y, Style style, const Rect& clip) {
     if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x].style = style;
   }
-  void setCell(size_t x, size_t y, const Cell& NewCell, const Rect& clip) {
+  void setCell(std::size_t x, std::size_t y, const Cell& NewCell, const Rect& clip) {
     if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
     currentBuffer[y * terminalData.col + x] = NewCell;
@@ -65,13 +65,13 @@ class frameBuffer {
   void display() {
     if(terminalData.row == 0 || terminalData.col == 0) return;
     displayOutput.clear();
-    for (size_t i = 0; i < terminalData.row - 1; i++) {
-      for (size_t j = 0; j < terminalData.col; j++) {
+    for (std::size_t i = 0; i < terminalData.row - 1; i++) {
+      for (std::size_t j = 0; j < terminalData.col; j++) {
         displayOutput += displayBufferPixel(i, j);
       }
       displayOutput += '\n';
     }
-    for (size_t j = 0; j < terminalData.col; j++) {
+    for (std::size_t j = 0; j < terminalData.col; j++) {
       displayOutput += displayBufferPixel(terminalData.row - 1, j);
     }
     std::cout << displayOutput << std::flush;
@@ -80,9 +80,9 @@ class frameBuffer {
   void incrementDisplay() {
     displayOutput.clear();
     bool previousDirty = false;
-    for (size_t i = 0; i < terminalData.row; i++) {
+    for (std::size_t i = 0; i < terminalData.row; i++) {
       previousDirty = false;
-      for (size_t j = 0; j < terminalData.col; j++) {
+      for (std::size_t j = 0; j < terminalData.col; j++) {
         if (!compareCell(i, j)) {
           previousDirty = false;
           continue;
@@ -101,7 +101,7 @@ class frameBuffer {
  protected:
   bool compareColour(Colour a, Colour b) { return static_cast<uint32_t>(a.colour) == static_cast<uint32_t>(b.colour); }
 
-  bool compareCell(size_t i, size_t j) {
+  bool compareCell(std::size_t i, std::size_t j) {
     if (i < 0 || i >= terminalData.row || j < 0 || j >= terminalData.col) return false;
     int index = i * terminalData.col + j;
     if (currentBuffer[index].glyph != previousBuffer[index].glyph) return true;
@@ -113,7 +113,7 @@ class frameBuffer {
 
   std::string displayBufferPixel(int i, int j) {
     int needReset = false;
-    size_t index = i * terminalData.col + j;
+    std::size_t index = i * terminalData.col + j;
     if (index >= currentBuffer.size()) throw std::runtime_error("Out of Borders for the Display Buffer");
     std::string pixelOutput;
     std::vector<std::string> sgr;
@@ -177,7 +177,7 @@ class frameBuffer {
 
     if (needReset) {
       pixelOutput += ESCAPE_SEQUENCE_ESC + "[";
-      for (size_t i = 0; i < sgr.size(); i++) {
+      for (std::size_t i = 0; i < sgr.size(); i++) {
         pixelOutput += sgr[i];
         if (i != sgr.size() - 1) {
           pixelOutput += ";";

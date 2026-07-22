@@ -9,7 +9,7 @@ class Grid : public MultiChildWidget {
 
   Grid(int row, int col) : rows(row), columns(col) {}
 
-  virtual bool handleEvent(const Event& e) override { return false;};
+  virtual bool handleEvent(const Event&) override { return false; };
 
   void setRowCol(int row, int col) {
     rows = row;

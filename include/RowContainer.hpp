@@ -8,7 +8,7 @@ public:
 
   Row(std::vector<std::unique_ptr<Widget>> c) { children = std::move(c); }
 
-  virtual bool handleEvent(const Event& e) override { return false;};
+  virtual bool handleEvent(const Event& ) override { return false;};
 
   void setRectForChildren() override {
     if (children.empty()) {
@@ -20,11 +20,11 @@ public:
     int startX = rect.x + padding.left;
     int startY = rect.y + padding.top;
 
-    size_t childrenLen = children.size();
+    std::size_t childrenLen = children.size();
     int ChildWidth = usableWidth / static_cast<int>(childrenLen);
     int currentX;
 
-    for (size_t i = 0; i < childrenLen - 1; i++) {
+    for (std::size_t i = 0; i < childrenLen - 1; i++) {
       currentX = static_cast<int>(i) * ChildWidth;
       // clang-format off
       children[i]->setRect(

@@ -4,7 +4,7 @@
 
 class Column : public MultiChildWidget {
  public:
-  virtual bool handleEvent(const Event& e) override { return false;};
+  virtual bool handleEvent(const Event&) override { return false; };
 
   void setRectForChildren() override {
     if (children.empty()) {
@@ -16,10 +16,10 @@ class Column : public MultiChildWidget {
     int startX = rect.x + padding.left;
     int startY = rect.y + padding.top;
 
-    size_t childrenLen = children.size();
+    std::size_t childrenLen = children.size();
     int Childheight = usableHeight / childrenLen;
     int currentY = 0;
-    for (size_t i = 0; i < childrenLen - 1; i++) {
+    for (std::size_t i = 0; i < childrenLen - 1; i++) {
       currentY = i * Childheight;
       // clang-format off
       children[i]->setRect(

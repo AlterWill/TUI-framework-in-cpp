@@ -1,31 +1,43 @@
 # Next Steps Roadmap
 
 ## How this TODO works
-This file contains the immediate, actionable next steps for your TUI framework. It is strictly ordered top-to-bottom. 
+This file contains the immediate, actionable next steps for your TUI framework. It is strictly ordered top-to-bottom.
 1. **Pick a task**: Work down the list sequentially. Do not jump to a later phase before finishing its dependencies.
 2. **Meet the requirement**: Each task has a "Completion Requirement" (the definition of done). Once your code fulfills this requirement, the task is complete.
 3. **Update the Roadmap**: Check the corresponding `[ ]` box in `ROADMAP.md` and move on to the next item!
 
 ---
 
-## 1. Phase 3: Focus System (Milestone 2)
+## 1. Phase 4: Container Widgets (Milestone 3)
 
-### Focus Traversal & Tab Navigation
-- **Goal**: Allow the user to cycle focus through focusable widgets using keyboard input.
-- **Completion Requirement**: Integrate focus cycling into the `EventDispatcher`. When a `Tab` or `Shift+Tab` key event is received, find the next or previous widget in the tree where `focusable = true` and update the active `focusedWidget` accordingly.
+### Flex Container
+- **Goal**: Create a flexible layout container capable of arranging children along a horizontal or vertical axis while distributing available space.
+- **Completion Requirement**: Implement a `Flex` widget supporting direction (row/column), spacing, alignment, and flexible sizing. Demonstrate multiple children automatically resizing and repositioning when the parent size changes.
 
-### Focus Scopes
-- **Goal**: Restrict focus traversal to a subset of widgets (e.g., locking focus within a modal/dialog).
-- **Completion Requirement**: Implement focus scope boundaries such that when a focus scope is active, pressing `Tab` or `Shift+Tab` cycles focus only within that scope and does not escape to the rest of the widget tree.
+### Stack Container
+- **Goal**: Allow multiple widgets to occupy the same layout region.
+- **Completion Requirement**: Implement a `Stack` widget where all children receive the same parent rectangle. Children are rendered in insertion order, allowing later widgets to appear on top of earlier ones.
+
+### Overlay Container
+- **Goal**: Support floating UI elements that appear above normal content.
+- **Completion Requirement**: Implement an `Overlay` container capable of rendering popups, tooltips, or dialogs above the primary widget tree without affecting the underlying layout.
+
+### Viewports
+- **Goal**: Restrict rendering to a visible portion of a larger virtual area.
+- **Completion Requirement**: Implement viewport clipping so widgets only render within their assigned viewport rectangle. Rendering outside the viewport must be clipped.
+
+### Scroll Container
+- **Goal**: Display content larger than the visible viewport.
+- **Completion Requirement**: Implement a `ScrollContainer` that maintains horizontal and/or vertical scroll offsets. Keyboard input should allow scrolling through content while rendering remains clipped to the viewport.
+
+### Split Pane
+- **Goal**: Divide available space into independently managed regions.
+- **Completion Requirement**: Implement a `SplitPane` supporting both horizontal and vertical orientations. Each pane should automatically receive its allocated space, and the divider position should be configurable.
 
 ---
 
-## 2. Phase 4: Layout Engine
+## 2. Future Improvements
 
-### Viewports & Scroll Container
-- **Goal**: Establish virtual windows for scrollable areas.
-- **Completion Requirement**: You can define a virtual canvas larger than the terminal window. A `ScrollContainer` widget applies this viewport, and you can test it by using keyboard input (arrow keys) to scroll up and down.
-
-### Advanced Constraints
-- **Goal**: Add dynamic sizing capabilities.
-- **Completion Requirement**: Widgets can accept size configurations like Fill/Expand (taking up all remaining space) and Min/Max bounds.
+### Focus Scopes
+- **Goal**: Restrict keyboard focus to a subtree of widgets.
+- **Completion Requirement**: When a focus scope is active (such as a modal dialog), `Tab` and `Shift+Tab` cycle only through widgets within that scope until the scope is dismissed.

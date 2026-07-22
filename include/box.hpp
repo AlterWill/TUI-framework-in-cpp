@@ -39,8 +39,8 @@ class Box : public SingleChildWidget {
   void drawBorder(frameBuffer& fb) {
     if (rect.width < 2 || rect.height < 2) return;
     
-    size_t right = rect.x + rect.width - 1;
-    size_t bottom = rect.y + rect.height - 1;
+    std::size_t right = rect.x + rect.width - 1;
+    std::size_t bottom = rect.y + rect.height - 1;
     
     Cell borderCell;
     borderCell.setColour(colours);
@@ -58,21 +58,21 @@ class Box : public SingleChildWidget {
     fb.setCell(right, bottom, borderCell, clip);
 
     borderCell.setGlyph(outline.horizontal);
-    for (size_t x = rect.x + 1; x < right; x++) {
+    for (std::size_t x = rect.x + 1; x < right; x++) {
       fb.setCell(x, rect.y, borderCell, clip);
       fb.setCell(x, bottom, borderCell, clip);
     }
     
     borderCell.setGlyph(outline.vertical);
-    for (size_t y = rect.y + 1; y < bottom; y++) {
+    for (std::size_t y = rect.y + 1; y < bottom; y++) {
       fb.setCell(rect.x, y, borderCell, clip);
       fb.setCell(right, y, borderCell, clip);
     }
 
     Cell bgCell;
     bgCell.setBackgroundColour(colours.getBackgroundColour());
-    for (size_t x = rect.x + 1; x < right; x++) {
-      for (size_t y = rect.y + 1; y < bottom; y++) {
+    for (std::size_t x = rect.x + 1; x < right; x++) {
+      for (std::size_t y = rect.y + 1; y < bottom; y++) {
         fb.setCell(x, y, bgCell, clip);
       }
     }

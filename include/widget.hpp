@@ -10,6 +10,7 @@ class Widget {
 
  public:
   Rect rect;
+  LayoutProperies layoutProperies;
   Rect clip;
   Widget* parent = nullptr;
   bool focused{false};
@@ -24,11 +25,56 @@ class Widget {
     clip.y = rect.y + padding.top;
   }
 
-  bool containsPoint(size_t x, size_t y) {
+  void setWidth(std::size_t width){
+    rect.width = width;
+  }
+
+  void setHeight(std::size_t height){
+    rect.height = height;
+  }
+
+
+  std::size_t getWidth(){
+    return rect.width ;
+  }
+
+  std::size_t getHeight(){
+    return rect.height ;
+  }
+
+  bool containsPoint(std::size_t x, std::size_t y) {
     if (rect.x <= x && x < rect.x + rect.width && rect.y <= y && y < rect.y + rect.height) {
       return true;
     }
     return false;
+  }
+
+  void setFlex(int flex){
+    layoutProperies.flex = flex;
+  }
+
+  int getFlex(){
+    return layoutProperies.flex;
+  }
+
+  void setMinWidth(std::size_t minWidth){
+    layoutProperies.minWidth = minWidth;
+  }
+
+  std::size_t getMinWidth(){
+    return layoutProperies.minWidth;
+  }
+
+  std::size_t getMaxWidth(){
+    return layoutProperies.maxWidth.value();
+  }
+
+  std::size_t getMaxHeight(){
+    return layoutProperies.maxHeight.value();
+  }
+
+  std::size_t getMinHeight(){
+    return layoutProperies.minHeight;
   }
 
   void onFocus() { focused = true; }
@@ -39,7 +85,7 @@ class Widget {
 
   void disableFocusable() { focusable = false;}
 
-  size_t childrenSize() { return 0; }
+  std::size_t childrenSize() { return 0; }
 
   virtual std::vector<Widget*> getChildren() { return {}; }
 

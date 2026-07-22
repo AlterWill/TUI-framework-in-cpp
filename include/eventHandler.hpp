@@ -87,7 +87,7 @@ class EventDispatcher {
     }
   }
 
-  Widget* widgetTreeDFS(Widget& node, size_t x, size_t y) {
+  Widget* widgetTreeDFS(Widget& node, std::size_t x, std::size_t y) {
     if (!node.containsPoint(x, y)) {
       return nullptr;
     }
