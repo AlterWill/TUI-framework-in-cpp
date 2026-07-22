@@ -8,35 +8,19 @@ This file contains the immediate, actionable next steps for your TUI framework. 
 
 ---
 
-## 1. Finish Phase 2: Rendering Engine & Terminal Backend
+## 1. Phase 3: Focus System (Milestone 2)
 
-### Off-screen Rendering
-- **Goal**: Allow rendering to a secondary buffer before drawing to the main terminal buffer.
-- **Completion Requirement**: Create an off-screen surface/canvas that widgets can draw into, which is then composited onto the main `frameBuffer`.
+### Focus Traversal & Tab Navigation
+- **Goal**: Allow the user to cycle focus through focusable widgets using keyboard input.
+- **Completion Requirement**: Integrate focus cycling into the `EventDispatcher`. When a `Tab` or `Shift+Tab` key event is received, find the next or previous widget in the tree where `focusable = true` and update the active `focusedWidget` accordingly.
 
----
-
-## 2. Phase 3: Input System (Milestone 2)
-
-### Terminal Resize Events (via Signals)
-- **Goal**: Detect when the terminal window changes size using OS signals.
-- **Completion Requirement**: The framework listens for the `SIGWINCH` signal. When triggered, it safely notifies the main loop to automatically trigger a framebuffer resize and layout re-calculation (removing the continuous polling of `resizeBuffer()`).
-
-### Event System (Objects & Dispatcher)
-- **Goal**: Propagate keyboard and system events to widgets.
-- **Completion Requirement**: Raw keystrokes (from `readKey()`) and resize events are translated into standard `KeyEvent` or `ResizeEvent` objects and routed down the widget tree using a dedicated event dispatcher.
-
-### Focus System (Focus Manager)
-- **Goal**: Track which widget currently receives keyboard input.
-- **Completion Requirement**: Implement a central Focus Manager that knows which widget is active. Only the active widget receives the dispatched `KeyEvent` objects.
-
-### Mouse Input
-- **Goal**: Process mouse clicks and movement.
-- **Completion Requirement**: The backend can enable mouse tracking and parse ANSI mouse escape sequences into `MouseEvent` objects, passing them to the event dispatcher.
+### Focus Scopes
+- **Goal**: Restrict focus traversal to a subset of widgets (e.g., locking focus within a modal/dialog).
+- **Completion Requirement**: Implement focus scope boundaries such that when a focus scope is active, pressing `Tab` or `Shift+Tab` cycles focus only within that scope and does not escape to the rest of the widget tree.
 
 ---
 
-## 3. Phase 4: Layout Engine
+## 2. Phase 4: Layout Engine
 
 ### Viewports & Scroll Container
 - **Goal**: Establish virtual windows for scrollable areas.

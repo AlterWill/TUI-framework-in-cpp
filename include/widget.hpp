@@ -5,17 +5,21 @@
 #include "rect.hpp"
 
 class Widget {
+ protected:
+  bool focusable{false};
+
  public:
   Rect rect;
   Rect clip;
   Widget* parent = nullptr;
+  bool focused{false};
 
   Insets padding;
   Insets margin;
 
   void setClip() {
     clip.height = std::max(rect.height - padding.top - padding.bottom, static_cast<std::size_t>(0));
-    clip.width = std::max(rect.width - padding.right - padding.left, static_cast<size_t>(0));
+    clip.width = std::max(rect.width - padding.right - padding.left, static_cast<std::size_t>(0));
     clip.x = rect.x + padding.left;
     clip.y = rect.y + padding.top;
   }
@@ -26,6 +30,14 @@ class Widget {
     }
     return false;
   }
+
+  void onFocus() { focused = true; }
+
+  void onUnFocus() { focused = false; }
+
+  bool isFocusable() { return focusable; }
+
+  void disableFocusable() { focusable = false;}
 
   size_t childrenSize() { return 0; }
 

@@ -63,17 +63,17 @@ Everything related to user input and events.
 
 ### Event System
 
-* [ ] Event objects
-* [ ] Event dispatcher
-* [ ] Event propagation
-* [ ] Event bubbling
+* [x] Event objects
+* [x] Event dispatcher
+* [x] Event propagation
+* [x] Event bubbling
 > * [ ] Event capture
 
 ### Focus System
 
-* [ ] Focus manager
-* [ ] Focus traversal
-* [ ] Tab navigation
+* [x] Focus manager
+* [x] Focus traversal
+* [x] Tab navigation
 * [ ] Focus scopes
 
 ## Phase 4 — Layout Engine
