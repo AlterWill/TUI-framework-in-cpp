@@ -104,6 +104,14 @@ class Widget {
     setClip();
   }
 
+  void setRect(Rect r) {
+    rect.x = r.x;
+    rect.y = r.y;
+    rect.height = r.height;
+    rect.width = r.width;
+    setClip();
+  }
+
   virtual void render(frameBuffer& fb) = 0;
   virtual void layout() = 0;
   virtual bool handleEvent(const Event&) { return false; };

@@ -91,8 +91,9 @@ class EventDispatcher {
     if (!node.containsPoint(x, y)) {
       return nullptr;
     }
-    for (Widget* child : node.getChildren()) {
-      if (Widget* hit = widgetTreeDFS(*child, x, y)) {
+    auto children = node.getChildren();
+    for (auto it = children.rbegin(); it != children.rend(); it++) {
+      if (Widget* hit = widgetTreeDFS(**it, x, y)) {
         return hit;
       }
     }
