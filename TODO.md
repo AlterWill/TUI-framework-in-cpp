@@ -8,23 +8,20 @@ This file contains the immediate, actionable next steps for your TUI framework. 
 
 ---
 
-## 1. Phase 4: Container Widgets (Milestone 3)
+## 1. Phase 4: Layout Engine (Milestone 2)
 
-### Flex Container
-- **Goal**: Create a flexible layout container capable of arranging children along a horizontal or vertical axis while distributing available space.
-- **Completion Requirement**: Implement a `Flex` widget supporting direction (row/column), spacing, alignment, and flexible sizing. Demonstrate multiple children automatically resizing and repositioning when the parent size changes.
+### Measure Pass
+- **Goal**: Introduce a dedicated measure phase before layout so widgets can report their preferred size given maximum layout constraints.
+- **Completion Requirement**:
+  - Add `measure()` to `Widget`.
+  - Introduce a `Constraints` structure (max width, max height).
+  - Implement `measure()` for `Text`.
+  - Update existing containers to use `measure()` before layout.
+  - Existing examples should continue working.
 
-### Stack Container
-- **Goal**: Allow multiple widgets to occupy the same layout region.
-- **Completion Requirement**: Implement a `Stack` widget where all children receive the same parent rectangle. Children are rendered in insertion order, allowing later widgets to appear on top of earlier ones.
-
-### Overlay Container
-- **Goal**: Support floating UI elements that appear above normal content.
-- **Completion Requirement**: Implement an `Overlay` container capable of rendering popups, tooltips, or dialogs above the primary widget tree without affecting the underlying layout.
-
-### Viewports
-- **Goal**: Restrict rendering to a visible portion of a larger virtual area.
-- **Completion Requirement**: Implement viewport clipping so widgets only render within their assigned viewport rectangle. Rendering outside the viewport must be clipped.
+### RenderContext Improvements
+- **Goal**: Rewrite the render function so that a `RenderContext` is constructed and passed explicitly through the widget tree instead of a raw framebuffer.
+- **Completion Requirement**: `WidgetTree::render()` builds a `RenderContext` and passes it to the root widget. All widgets receive and forward the context correctly. Existing rendering behaviour is unchanged.
 
 ### Scroll Container
 - **Goal**: Display content larger than the visible viewport.

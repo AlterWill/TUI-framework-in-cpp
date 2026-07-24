@@ -80,14 +80,8 @@ Everything related to user input and events.
 
 Make layouts more flexible and expressive.
 
-### Containers
-
-* [ ] Flex
-* [ ] Stack
-* [ ] Overlay
-* [ ] Viewports
-* [ ] Scroll container
-* [ ] Split pane
+> * [ ] Measure pass
+> * [ ] RenderContext improvements
 
 ### Constraints
 
@@ -97,6 +91,15 @@ Make layouts more flexible and expressive.
 * [ ] Min / max size
 * [ ] Percentage sizing
 * [ ] Child alignment
+
+### Containers
+
+* [ ] Flex
+* [ ] Stack
+* [ ] Overlay
+* [ ] Viewports
+* [ ] Scroll container
+* [ ] Split pane
 
 ## Phase 5 — Styling System
 
