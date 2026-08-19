@@ -4,12 +4,39 @@
 
 #include "multiChildWidget.hpp"
 
-enum FlexDirection { Row, Column };
+enum class FlexDirection { Row, Column };
 
+// flex sets size by percentage
 class Flex : public MultiChildWidget {
   FlexDirection flexdirection;
 
   Flex(FlexDirection dir = FlexDirection::Row) : flexdirection(dir) {}
+
+  Size measure(const SizeConstraints& constraints) override {
+    if (children.empty()) {
+      return Size{0, 0};
+    }
+
+    std::size_t mainAxisSum = 0;
+    std::size_t crossAxisMax = 0;
+
+    for (auto& child : children) {
+      Size childSize = child->measure(constraints);
+      if (flexdirection == FlexDirection::Row) {
+        mainAxisSum += childSize.getWidth();
+        crossAxisMax = std::max(crossAxisMax, childSize.getHeight());
+      } else {
+        mainAxisSum += childSize.getHeight();
+        crossAxisMax = std::max(crossAxisMax, childSize.getWidth());
+      }
+    }
+
+    if (flexdirection == FlexDirection::Row) {
+      return Size{crossAxisMax, mainAxisSum};
+    } else {
+      return Size{mainAxisSum, crossAxisMax};
+    }
+  }
 
   void setRectForChildren() override {
     int totalFlex{}, fillCount{};
@@ -30,7 +57,7 @@ class Flex : public MultiChildWidget {
       if (child->getFlex() < 0) continue;
       // set teh width and height for child who has flex > 0
       switch (flexdirection) {
-        case Row: {
+        case FlexDirection::Row: {
           double ratio = static_cast<double>(flex) / totalFlex;
           std::size_t width =
               std::clamp(static_cast<std::size_t>(ratio * rect.width), child->getMinWidth(), child->getMaxWidth());
@@ -39,7 +66,7 @@ class Flex : public MultiChildWidget {
           child->setHeight(rect.height);
           break;
         }
-        case Column: {
+        case FlexDirection::Column: {
           double ratio = static_cast<double>(flex) / totalFlex;
           std::size_t height =
               std::clamp(static_cast<std::size_t>(ratio * rect.width), child->getMinWidth(), child->getMaxWidth());
@@ -62,7 +89,7 @@ class Flex : public MultiChildWidget {
         if (child->getFlex() > 0) continue;
         // set teh width and height for child who has flex > 0
         switch (flexdirection) {
-          case Row: {
+          case FlexDirection::Row: {
             std::size_t width = std::clamp(flexWidth, child->getMinWidth(), child->getMaxWidth());
             child->setWidth(width);
             child->setHeight(rect.height);
@@ -71,9 +98,9 @@ class Flex : public MultiChildWidget {
             break;
           }
 
-          case Column: {
+          case FlexDirection::Column: {
             std::size_t height = std::clamp(flexHeight, child->getMinHeight(), child->getMaxHeight());
-            child->setWidth( rect.width);
+            child->setWidth(rect.width);
             child->setHeight(height);
             remainingHeight -= height;
             lastFillChild = child.get();
@@ -83,12 +110,12 @@ class Flex : public MultiChildWidget {
       }
     }
 
-    if(lastFillChild){
+    if (lastFillChild) {
       switch (flexdirection) {
-        case Row: {
+        case FlexDirection::Row: {
           lastFillChild->rect.width += remainingWidth;
         }
-        case Column:{
+        case FlexDirection::Column: {
           lastFillChild->rect.height += remainingHeight;
         }
       }
@@ -96,16 +123,16 @@ class Flex : public MultiChildWidget {
 
     std::size_t currentX = rect.x;
     std::size_t currentY = rect.y;
-    for(auto& child : children){
+    for (auto& child : children) {
       child->rect.x = currentX;
       child->rect.y = currentY;
 
-      switch(flexdirection){
-        case Row:{
+      switch (flexdirection) {
+        case FlexDirection::Row: {
           currentX += child->getWidth();
           break;
         }
-        case Column:{
+        case FlexDirection::Column: {
           currentY += child->getHeight();
           break;
         }

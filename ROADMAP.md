@@ -29,7 +29,7 @@ The foundation of the framework.
 * [x] Margin support
 * [x] Padding support
 
-## Phase 2 — Rendering Engine
+## Phase 2 — Rendering Engine ✅
 
 Improve how frames are produced and displayed.
 
@@ -38,7 +38,7 @@ Improve how frames are produced and displayed.
 * [x] Dirty cell tracking
 * [x] Double buffering
 * [x] Clipping
-> * [ ] Off-screen rendering
+* [ ] Off-screen rendering
 
 ### Terminal Backend
 
@@ -58,8 +58,8 @@ Everything related to user input and events.
 
 * [x] Keyboard input
 * [x] Mouse input
-> * [ ] Clipboard
-> * [ ] Terminal resize events
+* [ ] Clipboard integration
+* [ ] Terminal resize events (`SIGWINCH`)
 
 ### Event System
 
@@ -67,7 +67,7 @@ Everything related to user input and events.
 * [x] Event dispatcher
 * [x] Event propagation
 * [x] Event bubbling
-> * [ ] Event capture
+* [ ] Event capture
 
 ### Focus System
 
@@ -80,25 +80,26 @@ Everything related to user input and events.
 
 Make layouts more flexible and expressive.
 
-> * [ ] Measure pass
-> * [ ] RenderContext improvements
+* [x] Measure pass
+* [x] Measure calculation
+* [x] RenderContext integration
 
 ### Constraints
 
-* [ ] Fixed size
-* [ ] Preferred size
-* [ ] Fill / expand
-* [ ] Min / max size
-* [ ] Percentage sizing
-* [ ] Child alignment
+* [x] Fixed size
+* [x] Preferred size
+* [x] Fill / expand
+* [x] Min / max size
+* [x] Percentage sizing
+* [x] Child alignment
 
 ### Containers
 
-* [ ] Flex
-* [ ] Stack
-* [ ] Overlay
+* [x] Flex container
+* [x] Stack container
+* [x] Scroll container
+* [ ] Overlay container
 * [ ] Viewports
-* [ ] Scroll container
 * [ ] Split pane
 
 ## Phase 5 — Styling System

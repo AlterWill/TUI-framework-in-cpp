@@ -1,3 +1,4 @@
+#pragma once
 
 #include "colourPair.hpp"
 
@@ -18,7 +19,14 @@ enum class TextStyle : uint8_t {
 struct Style {
   ColourPair colours{};
   uint8_t textStyle = static_cast<uint8_t>(TextStyle::None);
+
+  // Getters
+  ColourPair getColours() const { return colours; }
+  uint8_t getTextStyle() const { return textStyle; }
+
+  // Setters
+  void setColours(ColourPair val) { colours = val; }
   void setTextStyle(TextStyle t) { textStyle |= static_cast<int>(t); }
   void removeTextStyle(TextStyle t) { textStyle &= ~static_cast<int>(t); }
-  bool hasTextStyle(TextStyle t) { return (textStyle & static_cast<int>(t)) != 0; }
+  bool hasTextStyle(TextStyle t) const { return (textStyle & static_cast<int>(t)) != 0; }
 };

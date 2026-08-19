@@ -1,498 +1,189 @@
 # TUI Library
 
-A C++ terminal UI library built around a retained widget tree, incremental rendering, and a clean separation between layout, events, and terminal output.
+A C++ terminal UI framework built around a retained widget tree, incremental rendering, and a clean separation between layout, events, and terminal output.
 
 ## Overview
 
-This project is a TUI framework for building terminal-based interfaces with reusable widgets, flexible layouts, and a declarative composition style. The goal is to make terminal UIs feel structured and scalable, while still staying lightweight and fast.
+This project is a TUI framework for building terminal-based interfaces with reusable widgets, flexible layouts, and a declarative composition style. The goal is to make terminal UIs feel structured and scalable while remaining lightweight and fast.
 
-The library currently focuses on the core runtime:
+The library currently provides core framework runtime features:
 
-* widget trees
-* layout and render passes
-* framebuffer-based drawing
-* ANSI output
-* incremental redraw
-* UTF-8 rendering
-* a simple declarative DSL
+* Retained widget trees
+* Layout and render passes with constraint resolution
+* Framebuffer-based drawing with double buffering
+* ANSI output with 256-color and true-color support
+* Incremental redraw with dirty cell tracking
+* UTF-8 rendering & Unicode width calculation
+* Keyboard and mouse event handling with event propagation
+* Focus management and Tab navigation
+* Declarative React-like DSL
 
 ## Design Goals
 
-The library is being built around a few core ideas:
-
-* **Retained widget tree**: widgets stay alive and keep their own state.
-* **Separation of concerns**: layout, rendering, input, focus, and styling should be separate systems.
-* **Incremental rendering**: only redraw what changed.
-* **Extensibility**: the architecture should support future widgets like buttons, inputs, dialogs, tables, and scroll views.
-* **Practicality**: the framework should be useful for real terminal apps, not just demos.
-* **Backend flexibility**: support different terminal capabilities like 256-color and true-color output.
+* **Retained widget tree**: Widgets maintain their identity, hierarchy, and state across frames.
+* **Separation of concerns**: Layout, rendering, input, focus, and styling operate cleanly as independent systems.
+* **Incremental rendering**: Only dirty cells that actually change between frames are flushed to the terminal.
+* **Extensibility**: Architectural support for containers (Row, Column, Grid, Flex, Stack, Scroll) and interactive widgets (Buttons, Inputs, Dialogs).
+* **Practicality**: High-performance runtime suitable for real-world terminal applications.
+* **Backend flexibility**: Abstraction layers for terminal backends (Linux backend with ANSI escape sequences).
 
 ## Current State
 
-The current implementation already includes:
+The implementation includes:
 
-* Widget base class
-* Widget tree
-* Single-child widgets
-* Multi-child widgets
-* Layout pass
-* Render pass
-* Framebuffer
-* UTF-8 rendering
-* Declarative DSL
-* Text widget
-* Box widget
-* Row layout
-* Column layout
-* Grid layout
-* Margin support
-* Padding support
-* ANSI style output
-* Incremental rendering
-* Dirty cell tracking
-* Double buffering
+* `Widget` base class with hierarchy and bounds tracking (`Rect`, `Insets`)
+* `WidgetTree` for root layout orchestration and double-buffered rendering
+* Single-child (`SingleChildWidget`) and multi-child (`MultiChildWidget`) base containers
+* Constraint-based layout engine (`SizeConstraints`, `measure()`, `layout()`)
+* Container Layouts: `Row`, `Column`, `Grid`, `Flex`, `Stack`, `ScrollContainer`
+* Display Widgets: `Text`, `Box` (with customizable borders and padding)
+* Framebuffer & Cell state management (`frameBuffer.hpp`, `cell.hpp`)
+* Incremental double-buffering & dirty cell diffing
+* Terminal Backends: `linux_backend` with non-blocking raw mode support
+* Color output: `Colour`, `ColourPair`, `NamedColour`, 256-color, and True-color (RGB) support
+* Event Handling: Keyboard (`keyEvent`) and Mouse (`MouseEvent`) dispatch with propagation
+* Focus System: `FocusManager` with Tab / Shift-Tab focus traversal
+* React-inspired DSL (`react_dsl.hpp`) for declarative UI construction
 
-## Architecture
-
-The library should be structured around a few clear layers.
-
-### 1. App Layer
-
-The app layer owns the overall UI state and runtime loop.
-
-It is responsible for:
-
-* holding the application state
-* creating the root widget tree
-* processing events
-* triggering layout and rendering
-* handling future command/task execution
-
-### 2. Widget Tree
-
-Widgets are the building blocks of the UI.
-
-Each widget should be responsible for:
-
-* `layout()` — deciding child rectangles
-* `event()` — reacting to input
-* `render()` — painting into the framebuffer
-
-Widgets should not print directly to the terminal.
-
-### 3. Layout Engine
-
-The layout engine decides how space is distributed.
-
-It should eventually support:
-
-* row
-* column
-* grid
-* flex
-* stack
-* overlay
-* split panes
-* viewports
-* scroll containers
-
-Layout should be based on constraints rather than hardcoded geometry, so future widgets can grow naturally.
-
-### 4. Event System
-
-The event system will handle:
-
-* keyboard input
-* mouse input
-* resize events
-* clipboard input
-* custom events
-* tick/update events
-
-Events should move through the widget tree with focus-aware dispatch and optional propagation.
-
-### 5. Focus System
-
-Focus is needed for interactive widgets like:
-
-* buttons
-* inputs
-* menus
-* sliders
-* dialogs
-
-The focus system should support:
-
-* focus manager
-* focus traversal
-* tab navigation
-* focus scopes
-* focused/hovered/active widget states
-
-### 6. Renderer
-
-Rendering should be separate from widgets.
-
-The renderer should:
-
-* draw into the framebuffer
-* apply styles
-* clip output
-* support off-screen rendering
-* perform dirty-region diffing
-* flush changes to the terminal backend
-
-### 7. Backend
-
-The backend layer should abstract terminal-specific behavior.
-
-It should be responsible for:
-
-* terminal size detection
-* color capability detection
-* cursor control
-* alternate screen support
-* raw mode handling
-* terminal capability differences
-
-## Suggested Folder Structure
+## Directory Structure
 
 ```text
-src/
-  app/
-    app.hpp
-    app.cpp
-    runtime.hpp
+.
+├── include/
+│   ├── backend.hpp              # Abstract terminal backend interface
+│   ├── linux_backend.hpp        # Linux terminal raw mode & event reader
+│   ├── cell.hpp                 # Framebuffer cell representation
+│   ├── colour.hpp               # RGB & 256-color definitions
+│   ├── colourPair.hpp           # Foreground / background color pairs
+│   ├── named_colour.hpp         # Standard palette enum constants
+│   ├── Point.hpp                # 2D coordinate structure
+│   ├── Rect.hpp                 # Rectangle bounds & geometry helper
+│   ├── Size.hpp                 # 2D dimensions
+│   ├── SizeConstraints.hpp      # Min/max layout constraints
+│   ├── insets.hpp               # Padding & margin dimensions
+│   ├── style.hpp                # Widget styling attributes
+│   ├── renderContext.hpp        # Render buffer drawing context & clipping
+│   ├── frameBuffer.hpp          # Double buffer & cell differential flusher
+│   ├── event.hpp                # Keyboard and mouse event primitives
+│   ├── eventHandler.hpp         # Event dispatcher & focus manager
+│   ├── widget.hpp               # Abstract base Widget class
+│   ├── widgetTree.hpp           # Root tree manager & render loop driver
+│   ├── singleChildWidget.hpp    # Single child widget base class
+│   ├── multiChildWidget.hpp     # Multi child widget base class
+│   ├── text.hpp                 # Multi-line text & alignment widget
+│   ├── box.hpp                  # Bordered container widget
+│   ├── RowContainer.hpp         # Horizontal linear layout
+│   ├── ColumnContainer.hpp      # Vertical linear layout
+│   ├── GridContainer.hpp        # Matrix grid layout
+│   ├── FlexContainer.hpp        # Flexbox ratio-based layout
+│   ├── StackContainer.hpp       # Z-index / overlapping stack container
+│   ├── ScrollContainer.hpp      # Viewport scroll container
+│   ├── react_dsl.hpp            # Declarative DSL helper macro/functions
+│   ├── splitParagraphs.hpp      # UTF-8 text wrapping helpers
+│   ├── unicode.hpp              # UTF-8 character decoding & width calculation
+│   └── tools.hpp                # Terminal control escape utilities
+├── src/
+│   └── main.cpp                 # Application entry point & demo benchmark
+├── CMakeLists.txt               # Build configuration
+├── README.md                    # Framework overview & docs
+├── ROADMAP.md                   # Feature development roadmap
+├── TODO.md                      # Detailed task roadmap
+└── plan.md                      # Architecture design notes & raw ideas
+```
 
-  core/
-    widget.hpp
-    event.hpp
-    rect.hpp
-    constraints.hpp
-    style.hpp
-    focus.hpp
+## Getting Started
 
-  layout/
-    row.hpp
-    column.hpp
-    grid.hpp
-    flex.hpp
-    stack.hpp
-    overlay.hpp
-    scroll_view.hpp
+### Prerequisites
 
-  render/
-    framebuffer.hpp
-    renderer.hpp
-    clipping.hpp
-    dirty_region.hpp
+* C++20 compliant compiler (GCC, Clang)
+* CMake 3.20+
+* Ninja (recommended) or Make
 
-  backend/
-    backend.hpp
-    linux_backend.hpp
-    ansi_encoder.hpp
+### Building and Running
 
-  widgets/
-    text.hpp
-    box.hpp
-    button.hpp
-    checkbox.hpp
-    input.hpp
-    list.hpp
-    table.hpp
+```bash
+# Clone the repository
+git clone https://github.com/AlterWill/TUI.git
+cd TUI
 
-  theme/
-    theme.hpp
-    classes.hpp
+# Clean any existing build directory (optional)
+rm -rf build
 
-  utils/
-    unicode.hpp
-    tools.hpp
+# Configure using CMake with Ninja generator
+cmake -G Ninja -B build
+
+# Build the binary
+cmake --build build
+
+# Run the application demo
+./build/tui
 ```
 
 ## Render Flow
 
-A frame should follow this flow:
-
-1. Read input
-2. Convert it into an event
-3. Dispatch the event
-4. Update application state
-5. Recompute layout if needed
-6. Render into the framebuffer
-7. Diff the framebuffer
-8. Flush changes to the terminal
-
-This keeps the system predictable and easy to extend.
-
-## What the Library Already Does Well
-
-The current implementation already has a strong foundation:
-
-* a retained widget tree
-* a framebuffer model
-* dirty cell tracking
-* incremental rendering
-* a declarative DSL
-* Unicode and ANSI output
-* basic layout containers
-
-That is enough to grow into a real TUI framework.
-
-## What Comes Next
-
-The next important systems to build are:
-
-1. **Clipping**
-2. **Backend abstraction**
-3. **Keyboard input**
-4. **Mouse input**
-5. **Resize events**
-6. **Event objects and dispatch**
-7. **Focus management**
-8. **Constraint-based layout**
-9. **Theme system**
-
-After that, the library can start getting standard widgets.
-
-## Roadmap
-
-## Milestone 1: MVP Runtime
-
-Goal: Render text, boxes, layouts, incremental redraw, and terminal resize handling.
-
-### Phase 1 — Core Engine
-
-* [x] Widget base class
-* [x] Widget tree
-* [x] Single-child widgets
-* [x] Multi-child widgets
-* [x] Layout pass
-* [x] Render pass
-* [x] Framebuffer
-* [x] UTF-8 rendering
-* [x] Declarative DSL
-* [x] Text widget
-* [x] Box widget
-* [x] Row layout
-* [x] Column layout
-* [x] Grid layout
-* [x] Margin support
-* [x] Padding support
-
-### Phase 2 — Rendering Engine
-
-* [x] ANSI style output
-* [x] Incremental rendering
-* [x] Dirty cell tracking
-* [x] Double buffering
-* [ ] Clipping
-* [ ] Off-screen rendering
-
-### Terminal Backend
-
-* [ ] 256-color support
-* [ ] True-color support
-* [ ] Backend abstraction
-
-## Milestone 2: Interactive Core
-
-Goal: Keyboard input, focus handling, flexible layouts, and theming.
-
-### Phase 3 — Input System
-
-* [ ] Keyboard input
-* [ ] Mouse input
-* [ ] Clipboard
-* [ ] Terminal resize events
-
-### Event System
-
-* [ ] Event objects
-* [ ] Event dispatcher
-* [ ] Event propagation
-* [ ] Event bubbling
-* [ ] Event capture
-
-### Focus System
-
-* [ ] Focus manager
-* [ ] Focus traversal
-* [ ] Tab navigation
-* [ ] Focus scopes
-
-### Phase 4 — Layout Engine
-
-#### Containers
-
-* [ ] Flex
-* [ ] Stack
-* [ ] Overlay
-* [ ] Viewports
-* [ ] Scroll container
-* [ ] Split pane
-
-#### Constraints
-
-* [ ] Fixed size
-* [ ] Preferred size
-* [ ] Fill / expand
-* [ ] Min / max size
-* [ ] Percentage sizing
-* [ ] Child alignment
-
-### Phase 5 — Styling System
-
-#### Styles
-
-* [x] Per-widget style
-
-#### Themes
-
-* [ ] Theme manager
-* [ ] Style inheritance
-* [ ] Theme switching
-* [ ] Global theme
-
-#### Widget States
-
-* [ ] Hover
-* [ ] Focused
-* [ ] Active
-* [ ] Disabled
-* [ ] Selected
-
-#### Style System
-
-* [ ] Style classes
-* [ ] CSS-like selectors
-* [ ] State-dependent styles
-
-## Milestone 3: Usable Widgets
-
-Goal: A practical standard library of common TUI controls.
-
-### Phase 6 — Basic Widgets
-
-* [ ] Spacer
-* [ ] Divider
-* [ ] Progress bar
-* [ ] Spinner
-
-### Phase 7 — Interactive Widgets
-
-* [ ] Button
-* [ ] Checkbox
-* [ ] Radio button
-* [ ] Toggle switch
-* [ ] Slider
-
-### Phase 8 — Input Widgets
-
-* [ ] Text input
-* [ ] Password input
-* [ ] Text area
-* [ ] Number input
-
-### Phase 9 — Advanced Widgets
-
-* [ ] List view
-* [ ] Table
-* [ ] Tree view
-* [ ] Tabs
-* [ ] Menu
-* [ ] Status bar
-* [ ] Toolbar
-
-### Phase 10 — Dialogs
-
-* [ ] Popup
-* [ ] Modal
-* [ ] Tooltip
-* [ ] Notification
-* [ ] Context menu
-
-## Milestone 4: Polish
-
-Goal: Performance, documentation, testing, and developer experience.
-
-### Phase 11 — Performance
-
-* [ ] Dirty widget rendering
-* [ ] Layout caching
-* [ ] Render caching
-* [ ] Frame timing
-* [ ] Memory optimizations
-
-### Phase 12 — Developer Experience
-
-* [ ] Documentation
-* [ ] Example gallery
-* [ ] Unit tests
-* [ ] Benchmarks
-* [ ] CI/CD
-* [ ] Package manager support
-* [ ] Better compiler diagnostics
-
-## Milestone 5: Long-Term Goals
-
-Goal: Future directions after the core framework is mature.
-
-### Phase 13 — Future Vision
-
-* [ ] Image widget (ASCII / Unicode)
-* [ ] Animation system
-* [ ] Async task integration
-* [ ] Virtualized list view
-* [ ] Markdown renderer
-* [ ] Code editor widget
-* [ ] Canvas widget
-
-## Example Usage
+A frame follows this execution pipeline:
+
+1. Read input events from `Backend` non-blocking stdin
+2. Convert raw escape codes into `KeyEvent` / `MouseEvent`
+3. Dispatch events to focused widget or propagate down widget tree
+4. Update application state on user input
+5. Run layout pass: `measure()` constraints and set target `Rect` bounds
+6. Run render pass: widgets write styled glyphs into `RenderContext`
+7. Diff current `Framebuffer` against previous frame to identify dirty cells
+8. Flush dirty cell ANSI color & cursor escape sequences to the terminal backend
+
+## Declarative DSL Example
 
 ```cpp
-#include "tui.hpp"
+#include "react_dsl.hpp"
+#include "tui.hpp" // main framework include
 
 int main() {
-    run_app(
-        box(
-            grid(
-                rows = 2,
-                cols = 2,
-                box(text("Top Left")),
-                box(text("Top Right")),
-                box(text("Bottom Left")),
-                box(text("Bottom Right"))
-            )
-        )
+    // Declarative UI tree creation using DSL syntax
+    auto app = box(
+        Column({
+            Text("TUI Framework Demo", Style{.fg = NamedColour::Cyan}, Alignment::center),
+            Row({
+                Text("Left Column"),
+                Text("Right Column")
+            })
+        })
     );
+
+    // Run main application loop
+    // (See src/main.cpp for full integration example)
 }
 ```
 
-## Project Philosophy
+## Roadmap Overview
 
-This library is meant to grow like a real framework:
+### Milestone 1: MVP Runtime (Completed ✅)
+* [x] Retained widget tree & base classes
+* [x] Layout pass (`measure` & `layout`)
+* [x] Framebuffer & UTF-8 renderer
+* [x] Basic containers (`Row`, `Column`, `Grid`)
+* [x] Double buffering & dirty cell diffing
+* [x] ANSI color & 256 / true-color output
 
-* core first
-* features second
-* keep abstractions small
-* avoid premature complexity
-* make the architecture support future widgets before adding too many widgets
+### Milestone 2: Interactive Core (In Progress 🚧)
+* [x] Keyboard & Mouse input handling
+* [x] Event dispatcher & propagation
+* [x] Focus manager & Tab traversal
+* [x] Flex, Stack, and Scroll layout containers
+* [x] Constraint-based layout resolution
+* [ ] Terminal resize handling (`SIGWINCH`)
+* [ ] Focus scopes & modal focus containment
+* [ ] Theme manager & global styling rules
+
+### Milestone 3: Standard Widget Library (Planned 📋)
+* [ ] Interactive controls: `Button`, `Checkbox`, `Radio`, `Slider`
+* [ ] Input controls: `TextInput`, `TextArea`, `PasswordInput`
+* [ ] Display controls: `ProgressBar`, `Spinner`, `Divider`, `Spacer`
+* [ ] Data controls: `ListView`, `Table`, `TreeView`, `Tabs`
+* [ ] Dialogs & Overlays: `Popup`, `Modal`, `Tooltip`, `Notification`
+
+See [ROADMAP.md](file:///home/alterwill/Github/TUI/ROADMAP.md) for detailed phase breakdowns and [TODO.md](file:///home/alterwill/Github/TUI/TODO.md) for active developer tasks.
 
 ## License
 
-Add your chosen license here.
-
-## Contributing
-
-Contributions are welcome once the core architecture is stable enough for outside use.
-
-Suggested contribution areas:
-
-* backend support
-* input handling
-* layout improvements
-* new widgets
-* rendering optimizations
-* documentation
-* tests
+This project is licensed under the MIT License - see the LICENSE file for details.

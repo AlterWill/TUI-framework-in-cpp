@@ -1,8 +1,10 @@
 #pragma once
 
-#include "frameBuffer.hpp"
+#include "Rect.hpp"
+#include "SizeConstraints.hpp"
+#include "event.hpp"
 #include "insets.hpp"
-#include "rect.hpp"
+#include "renderContext.hpp"
 
 class Widget {
  protected:
@@ -10,37 +12,36 @@ class Widget {
 
  public:
   Rect rect;
-  LayoutProperies layoutProperies;
-  Rect clip;
+  LayoutProperties layoutProperties;
   Widget* parent = nullptr;
   bool focused{false};
 
   Insets padding;
   Insets margin;
 
-  void setClip() {
-    clip.height = std::max(rect.height - padding.top - padding.bottom, static_cast<std::size_t>(0));
-    clip.width = std::max(rect.width - padding.right - padding.left, static_cast<std::size_t>(0));
-    clip.x = rect.x + padding.left;
-    clip.y = rect.y + padding.top;
-  }
+  // Width / Height
+  void setWidth(std::size_t width) { rect.setWidth(width); }
+  void setHeight(std::size_t height) { rect.setHeight(height); }
+  std::size_t getWidth() const { return rect.getWidth(); }
+  std::size_t getHeight() const { return rect.getHeight(); }
 
-  void setWidth(std::size_t width){
-    rect.width = width;
-  }
+  // X / Y position
+  void setX(std::size_t x) { rect.setX(x); }
+  void setY(std::size_t y) { rect.setY(y); }
+  std::size_t getX() const { return rect.getX(); }
+  std::size_t getY() const { return rect.getY(); }
 
-  void setHeight(std::size_t height){
-    rect.height = height;
-  }
+  // Focus
+  bool isFocused() const { return focused; }
+  void setFocused(bool val) { focused = val; }
 
+  // Parent
+  Widget* getParent() const { return parent; }
+  void setParent(Widget* val) { parent = val; }
 
-  std::size_t getWidth(){
-    return rect.width ;
-  }
-
-  std::size_t getHeight(){
-    return rect.height ;
-  }
+  // Padding / Margin
+  Insets getPadding() const { return padding; }
+  Insets getMargin() const { return margin; }
 
   bool containsPoint(std::size_t x, std::size_t y) {
     if (rect.x <= x && x < rect.x + rect.width && rect.y <= y && y < rect.y + rect.height) {
@@ -49,45 +50,33 @@ class Widget {
     return false;
   }
 
-  void setFlex(int flex){
-    layoutProperies.flex = flex;
-  }
+  // Flex
+  void setFlex(int flex) { layoutProperties.flex = flex; }
+  int getFlex() const { return layoutProperties.flex; }
 
-  int getFlex(){
-    return layoutProperies.flex;
-  }
+  // Min / Max size constraints
+  void setMinWidth(std::size_t minWidth) { layoutProperties.constraints.setMinWidth(minWidth); }
+  std::size_t getMinWidth() const { return layoutProperties.constraints.getMinWidth(); }
 
-  void setMinWidth(std::size_t minWidth){
-    layoutProperies.minWidth = minWidth;
-  }
+  void setMaxWidth(std::size_t maxWidth) { layoutProperties.constraints.setMaxWidth(maxWidth); }
+  std::size_t getMaxWidth() const { return layoutProperties.constraints.getMaxWidth(); }
 
-  std::size_t getMinWidth(){
-    return layoutProperies.minWidth;
-  }
+  void setMinHeight(std::size_t minHeight) { layoutProperties.constraints.setMinHeight(minHeight); }
+  std::size_t getMinHeight() const { return layoutProperties.constraints.getMinHeight(); }
 
-  std::size_t getMaxWidth(){
-    return layoutProperies.maxWidth.value();
-  }
-
-  std::size_t getMaxHeight(){
-    return layoutProperies.maxHeight.value();
-  }
-
-  std::size_t getMinHeight(){
-    return layoutProperies.minHeight;
-  }
+  void setMaxHeight(std::size_t maxHeight) { layoutProperties.constraints.setMaxHeight(maxHeight); }
+  std::size_t getMaxHeight() const { return layoutProperties.constraints.getMaxHeight(); }
 
   void onFocus() { focused = true; }
-
   void onUnFocus() { focused = false; }
 
-  bool isFocusable() { return focusable; }
-
-  void disableFocusable() { focusable = false;}
+  bool isFocusable() const { return focusable; }
+  void disableFocusable() { focusable = false; }
 
   std::size_t childrenSize() { return 0; }
 
   virtual std::vector<Widget*> getChildren() { return {}; }
+
 
   void setPadding(Insets p) {
     padding = p;
@@ -96,7 +85,7 @@ class Widget {
 
   void setMargin(Insets m) { margin = m; }
 
-  void setRect(int x, int y, int height, int width) {
+  void setRect(std::size_t x, std::size_t y, std::size_t height, std::size_t width) {
     rect.x = x;
     rect.y = y;
     rect.height = height;
@@ -105,16 +94,17 @@ class Widget {
   }
 
   void setRect(Rect r) {
-    rect.x = r.x;
-    rect.y = r.y;
-    rect.height = r.height;
-    rect.width = r.width;
+    rect = r;
     setClip();
   }
 
-  virtual void render(frameBuffer& fb) = 0;
+  virtual SizeConstraints measure() = 0;
+  virtual void render(RenderContext& rendercontext) = 0;
   virtual void layout() = 0;
-  virtual bool handleEvent(const Event&) { return false; };
+  virtual bool handleEvent(const Event&) { return false; }
 
   virtual ~Widget() {}
+
+ protected:
+  virtual void setClip() {}
 };

@@ -30,9 +30,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
   target_compile_options(tui PRIVATE 
     -Wall 
     -Wextra 
-    #-Wpedantic
-    #-Wconversion
-    #-Werror
+    # -Wpedantic
+    # -Wconversion
+    # -Werror
     -O2
   )
 endif()

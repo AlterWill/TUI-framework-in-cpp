@@ -1,4 +1,4 @@
-/*#pragma once
+#pragma once
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -9,39 +9,42 @@
 #include <string>
 #include <vector>
 
-#include "cell.hpp"
+#include "buffer.hpp"
 #include "backend.hpp"
 #include "tools.hpp"
 #include "unicode.hpp"
 #include "Rect.hpp"
 
-class frameBuffer {
-  std::vector<Cell> currentBuffer;
-  std::vector<Cell> previousBuffer;
+class Surface {
+  Buffer current;
+  Buffer previous;
   const std::string ESCAPE_SEQUENCE_ESC = "\x1b";
   std::string displayOutput;
 
  public:
   backend& terminalData;
 
-  frameBuffer(backend& terminal) : terminalData(terminal) {
+  Surface(backend& terminal) : terminalData(terminal) {
     terminalData.findTerminalSize();
-    currentBuffer.resize(terminalData.row * terminalData.col, Cell{});
-    previousBuffer.resize(terminalData.row * terminalData.col, Cell{});
+    current.resize(terminalData.col, terminalData.row);
+    previous.resize(terminalData.col, terminalData.row);
     displayOutput = "";
   }
 
-  void clear() { std::fill(currentBuffer.begin(), currentBuffer.end(), Cell{}); }
+  // Widgets write through this during the render pass
+  Buffer& getBuffer() { return current; }
+
+  void clear() { std::fill(current.cells.begin(), current.cells.end(), Cell{}); }
 
   void resizeBuffer() {
     displayOutput.clear();
     terminalData.findTerminalSize();
-    if (currentBuffer.size() != static_cast<std::size_t>(terminalData.row * terminalData.col)) {
-      currentBuffer.resize(terminalData.row * terminalData.col);
-      previousBuffer.resize(terminalData.row * terminalData.col);
+    if (current.cells.size() != static_cast<std::size_t>(terminalData.row * terminalData.col)) {
+      current.resize(terminalData.col, terminalData.row);
+      previous.resize(terminalData.col, terminalData.row);
 
       tools::clearScreen();
-      std::fill(previousBuffer.begin(), previousBuffer.end(), Cell{});
+      std::fill(previous.cells.begin(), previous.cells.end(), Cell{});
     }
     clear();
   }
@@ -49,17 +52,17 @@ class frameBuffer {
   void setGlyph(std::size_t x, std::size_t y, char32_t glyph, const Rect& clip) {
     if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x].glyph = glyph;
+    current.cells[y * terminalData.col + x].glyph = glyph;
   }
   void setStyle(std::size_t x, std::size_t y, Style style, const Rect& clip) {
     if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x].style = style;
+    current.cells[y * terminalData.col + x].style = style;
   }
   void setCell(std::size_t x, std::size_t y, const Cell& NewCell, const Rect& clip) {
     if (x < clip.x || x >= clip.x + clip.width || y < clip.y || y >= clip.y + clip.height) return;
     if (x < 0 || x >= terminalData.col || y < 0 || y >= terminalData.row) return;
-    currentBuffer[y * terminalData.col + x] = NewCell;
+    current.cells[y * terminalData.col + x] = NewCell;
   }
 
   void display() {
@@ -83,7 +86,7 @@ class frameBuffer {
     for (std::size_t i = 0; i < terminalData.row; i++) {
       previousDirty = false;
       for (std::size_t j = 0; j < terminalData.col; j++) {
-        if (!compareCell(i, j)) {
+        if (!isCellDirty(i, j)) {
           previousDirty = false;
           continue;
         }
@@ -94,53 +97,53 @@ class frameBuffer {
         previousDirty = true;
       }
     }
-    previousBuffer = currentBuffer;
+    previous.cells = current.cells;
     std::cout << displayOutput << std::flush;
   }
 
  protected:
   bool compareColour(Colour a, Colour b) { return static_cast<uint32_t>(a.colour) == static_cast<uint32_t>(b.colour); }
 
-  bool compareCell(std::size_t i, std::size_t j) {
+  bool isCellDirty(std::size_t i, std::size_t j) {
     if (i < 0 || i >= terminalData.row || j < 0 || j >= terminalData.col) return false;
     int index = i * terminalData.col + j;
-    if (currentBuffer[index].glyph != previousBuffer[index].glyph) return true;
-    if (!compareColour(currentBuffer[index].style.colours.fg, previousBuffer[index].style.colours.fg)) return true;
-    if (!compareColour(currentBuffer[index].style.colours.bg, previousBuffer[index].style.colours.bg)) return true;
-    if (currentBuffer[index].style.textStyle != previousBuffer[index].style.textStyle) return true;
+    if (current.cells[index].glyph != previous.cells[index].glyph) return true;
+    if (!compareColour(current.cells[index].style.colours.fg, previous.cells[index].style.colours.fg)) return true;
+    if (!compareColour(current.cells[index].style.colours.bg, previous.cells[index].style.colours.bg)) return true;
+    if (current.cells[index].style.textStyle != previous.cells[index].style.textStyle) return true;
     return false;
   }
 
-  // gives the pixel with asni code 
+  // gives the pixel with ansi code
   std::string displayBufferPixel(int i, int j) {
     int needReset = false;
     std::size_t index = i * terminalData.col + j;
-    if (index >= currentBuffer.size()) throw std::runtime_error("Out of Borders for the Display Buffer");
+    if (index >= current.cells.size()) throw std::runtime_error("Out of Borders for the Display Buffer");
     std::string pixelOutput;
     std::vector<std::string> sgr;
 
     for (int i = 0; i < 8; i++) {
-      if ((currentBuffer[index].style.textStyle & (1 << i)) != 0) {
+      if ((current.cells[index].style.textStyle & (1 << i)) != 0) {
         needReset = true;
         sgr.push_back(std::to_string(i + 1));
       }
     }
 
     // Foreground Color
-    if (currentBuffer[index].style.colours.fg.getAlpha() > 0) {
+    if (current.cells[index].style.colours.fg.getAlpha() > 0) {
       if (terminalData.supportsTrueColor) {
         // ESC[38;2;{r};{g};{b}m
         pixelOutput += ESCAPE_SEQUENCE_ESC + "[38;2;" +
-                       std::to_string(currentBuffer[index].style.colours.fg.getRedValue()) + ";" +
-                       std::to_string(currentBuffer[index].style.colours.fg.getGreenValue()) + ";" +
-                       std::to_string(currentBuffer[index].style.colours.fg.getBlueValue()) + "m";
+                       std::to_string(current.cells[index].style.colours.fg.getRedValue()) + ";" +
+                       std::to_string(current.cells[index].style.colours.fg.getGreenValue()) + ";" +
+                       std::to_string(current.cells[index].style.colours.fg.getBlueValue()) + "m";
       } else if (terminalData.supports256Color) {
         // ESC[38;5;{id}m
         pixelOutput += ESCAPE_SEQUENCE_ESC + "[38;5;" + 
-                       std::to_string(currentBuffer[index].style.colours.fg.to256Palette()) + "m";
+                       std::to_string(current.cells[index].style.colours.fg.to256Palette()) + "m";
       } else {
         // 16-color fallback
-        uint8_t colorIndex = currentBuffer[index].style.colours.fg.to16Palette();
+        uint8_t colorIndex = current.cells[index].style.colours.fg.to16Palette();
         if (colorIndex < 8) {
           pixelOutput += ESCAPE_SEQUENCE_ESC + "[" + std::to_string(30 + colorIndex) + "m";
         } else {
@@ -152,20 +155,20 @@ class frameBuffer {
     }
 
     // Background Color
-    if (currentBuffer[index].style.colours.bg.getAlpha() > 0) {
+    if (current.cells[index].style.colours.bg.getAlpha() > 0) {
       if (terminalData.supportsTrueColor) {
         // ESC[48;2;{r};{g};{b}m
         pixelOutput += ESCAPE_SEQUENCE_ESC + "[48;2;" +
-                       std::to_string(currentBuffer[index].style.colours.bg.getRedValue()) + ";" +
-                       std::to_string(currentBuffer[index].style.colours.bg.getGreenValue()) + ";" +
-                       std::to_string(currentBuffer[index].style.colours.bg.getBlueValue()) + "m";
+                       std::to_string(current.cells[index].style.colours.bg.getRedValue()) + ";" +
+                       std::to_string(current.cells[index].style.colours.bg.getGreenValue()) + ";" +
+                       std::to_string(current.cells[index].style.colours.bg.getBlueValue()) + "m";
       } else if (terminalData.supports256Color) {
         // ESC[48;5;{id}m
         pixelOutput += ESCAPE_SEQUENCE_ESC + "[48;5;" + 
-                       std::to_string(currentBuffer[index].style.colours.bg.to256Palette()) + "m";
+                       std::to_string(current.cells[index].style.colours.bg.to256Palette()) + "m";
       } else {
         // 16-color fallback
-        uint8_t colorIndex = currentBuffer[index].style.colours.bg.to16Palette();
+        uint8_t colorIndex = current.cells[index].style.colours.bg.to16Palette();
         if (colorIndex < 8) {
           pixelOutput += ESCAPE_SEQUENCE_ESC + "[" + std::to_string(40 + colorIndex) + "m";
         } else {
@@ -187,7 +190,7 @@ class frameBuffer {
       pixelOutput += "m";
     }
 
-    pixelOutput += unicode::toUtf8(currentBuffer[index].glyph);
+    pixelOutput += unicode::toUtf8(current.cells[index].glyph);
 
     if (needReset) {
       pixelOutput += ESCAPE_SEQUENCE_ESC + "[0m";
@@ -195,4 +198,3 @@ class frameBuffer {
     return pixelOutput;
   }
 };
-*/

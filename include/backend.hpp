@@ -19,4 +19,16 @@ class backend {
   virtual std::size_t getTerminalSizeCol() = 0;
   virtual int readKey() = 0;
   virtual std::optional<Event> readEvent() = 0;
+
+  // Getters
+  std::size_t getRow() const { return row; }
+  std::size_t getCol() const { return col; }
+  bool getSupportsTrueColor() const { return supportsTrueColor; }
+  bool getSupports256Color() const { return supports256Color; }
+
+  // Setters
+  void setRow(std::size_t val) { row = val; }
+  void setCol(std::size_t val) { col = val; }
+  void setSupportsTrueColor(bool val) { supportsTrueColor = val; }
+  void setSupports256Color(bool val) { supports256Color = val; }
 };

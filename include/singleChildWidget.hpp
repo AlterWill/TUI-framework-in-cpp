@@ -1,7 +1,7 @@
 #pragma once
 
+#include "renderContext.hpp"
 #include "widget.hpp"
-#include "frameBuffer.hpp"
 #include <memory>
 
 class SingleChildWidget : public Widget {
@@ -30,19 +30,39 @@ public:
 
   void removeChild() { child = nullptr; }
 
-  void render(frameBuffer &fb) override {
+  SizeConstraints buildConstraints(){
+    return SizeConstraints{Size{0,0},Size{rect.getHeight(),rect.getWidth()}};
+  }
+
+  Size measure(const SizeConstraints& constraints) override{
+    if(child){
+      return child->measure(constraints);
+    }
+    return Size{0,0};
+  }
+
+  virtual Rect computeRect(Size& ) { return Rect{};}
+
+  virtual void setRectForChild(){}
+
+  void render(RenderContext& renderContext) override {
     if (!child)
       return;
-    child->render(fb);
+    child->render(renderContext);
   }
 
-  void layout() override {
-    if (!child) {
-      return;
-    }
-    setRectForChild();
+void layout() override {
+    if (!child) return;
+
+    SizeConstraints constraints = buildConstraints();
+
+    Size size = child->measure(constraints);
+
+    Rect rect = computeRect(size);
+
+    child->setRect(rect);
+
     child->layout();
-  }
+}
 
-  virtual void setRectForChild() {}
 };
