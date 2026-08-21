@@ -31,7 +31,7 @@ class WidgetTree {
     if (!root) {
       return;
     }
-    RenderContext context{fb.getBuffer(), rect, Point{0, 0}};
+    RenderContext context{fb.getBuffer()};
     root->render(context);
   }
 
