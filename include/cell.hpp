@@ -6,6 +6,9 @@ struct Cell {
   char32_t glyph = U' ';
   Style style;
 
+  Cell() = default;
+  Cell(char ch,Style s) : glyph(static_cast<char32_t>(ch)), style(s){}
+  Cell(char32_t ch,Style s) : glyph(ch), style(s){}
   // Getters
   char32_t getGlyph() const { return glyph; }
   Style getStyle() const { return style; }
@@ -16,6 +19,7 @@ struct Cell {
     style = c.style;
   }
   void setGlyph(char32_t g) { glyph = g; }
+  void setGlyph(char g) { glyph = static_cast<char32_t>(g); }
   void setStyle(Style s) { style = s; }
   void setTextStyle(TextStyle t) { style.setTextStyle(t); }
   void removeTextStyle(TextStyle t) { style.removeTextStyle(t); }

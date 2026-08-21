@@ -27,28 +27,6 @@ class Buffer {
   std::size_t getWidth() const { return bufWidth; }
   std::size_t getHeight() const { return bufHeight; }
 
-  // Clipped writes — this is all widgets ever call
-  void setCell(std::size_t x, std::size_t y, const Cell& cell, const Rect& clip) {
-    if (x < clip.x || x >= clip.x + clip.width) return;
-    if (y < clip.y || y >= clip.y + clip.height) return;
-    if (x >= bufWidth || y >= bufHeight) return;
-    cells[y * bufWidth + x] = cell;
-  }
-
-  void setGlyph(std::size_t x, std::size_t y, char32_t glyph, const Rect& clip) {
-    if (x < clip.x || x >= clip.x + clip.width) return;
-    if (y < clip.y || y >= clip.y + clip.height) return;
-    if (x >= bufWidth || y >= bufHeight) return;
-    cells[y * bufWidth + x].glyph = glyph;
-  }
-
-  void setStyle(std::size_t x, std::size_t y, Style style, const Rect& clip) {
-    if (x < clip.x || x >= clip.x + clip.width) return;
-    if (y < clip.y || y >= clip.y + clip.height) return;
-    if (x >= bufWidth || y >= bufHeight) return;
-    cells[y * bufWidth + x].style = style;
-  }
-
   void setCell(std::size_t x, std::size_t y, const Cell& cell) {
     if (x >= bufWidth || y >= bufHeight) return;
     cells[y * bufWidth + x] = cell;
@@ -66,14 +44,17 @@ class Buffer {
 
   const Cell& at(std::size_t x, std::size_t y) const { return cells[y * bufWidth + x]; }
 
-  // Blit a srcRegion of this buffer into dst at (dstX, dstY), clipped to dstClip
-  void blitTo(Buffer& dst, const Rect& srcRegion, std::size_t dstX, std::size_t dstY, const Rect& dstClip) const {
+  void blitTo(Buffer& dst, const Rect& srcRegion, const Rect& dstRegion) const {
     for (std::size_t row = 0; row < srcRegion.height; ++row) {
       for (std::size_t col = 0; col < srcRegion.width; ++col) {
         std::size_t srcX = srcRegion.x + col;
         std::size_t srcY = srcRegion.y + row;
+        std::size_t dstX = dstRegion.x + col;
+        std::size_t dstY = dstRegion.y + row;
         if (srcX >= bufWidth || srcY >= bufHeight) continue;
-        dst.setCell(dstX + col, dstY + row, at(srcX, srcY), dstClip);
+        if (col >= dstRegion.width || row >= dstRegion.height) continue;
+        if (dstX >= dst.getWidth() || dstY >= dst.getHeight()) continue;
+        dst.setCell(dstX, dstY, at(srcX, srcY));
       }
     }
   }
