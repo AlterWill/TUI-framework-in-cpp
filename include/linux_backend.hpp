@@ -28,7 +28,7 @@ class linux_backend : public backend {
     if (keyboardSupport) {
       tcgetattr(STDIN_FILENO, &original);
       termios raw = original;
-      raw.c_lflag &= ~(ICANON | ECHO);
+      raw.c_lflag &= static_cast<uint>(~(ICANON | ECHO));
       raw.c_cc[VMIN] = 0;
       raw.c_cc[VTIME] = 1;
       tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
@@ -77,7 +77,7 @@ class linux_backend : public backend {
   std::size_t getTerminalSizeCol() override { return w.ws_col; }
 
   int readKey() override {
-    int nread;
+    long nread;
     char c;
 
     nread = read(STDIN_FILENO, &c, 1);
@@ -166,8 +166,8 @@ class linux_backend : public backend {
       if (std::sscanf(seq.c_str(), "[<%d;%d;%d%c", &code, &x, &y, &end) == 4) {
         MouseEvent mouse{};
 
-        mouse.x = x;
-        mouse.y = y;
+        mouse.x = static_cast<std::size_t>(x);
+        mouse.y = static_cast<std::size_t>(y);
 
         if (code & 64) {
           mouse.button = MouseButton::None;
