@@ -1,17 +1,38 @@
 #pragma once
 
 #include "buffer.hpp"
+#include "cell.hpp"
+#include "style.hpp"
 
 struct RenderContext {
-  Buffer& fb;
-  Rect& clip;
-  Point offset{};
+private:
+    Buffer& frameBuffer;
 
-  // Getters
-  std::size_t getXOffset() const { return offset.getX(); }
-  std::size_t getYOffset() const { return offset.getY(); }
+public:
+    explicit RenderContext(Buffer& buffer)
+        : frameBuffer(buffer) {}
 
-  // Setters
-  void setXOffset(std::size_t val) { offset.setX(val); }
-  void setYOffset(std::size_t val) { offset.setY(val); }
+    void setCell(std::size_t x, std::size_t y, const Cell& cell) {
+        frameBuffer.setCell(x, y, cell);
+    }
+
+    void setGlyph(std::size_t x, std::size_t y, char32_t glyph) {
+        frameBuffer.setGlyph(x, y, glyph);
+    }
+
+    void setStyle(std::size_t x, std::size_t y, Style style) {
+        frameBuffer.setStyle(x, y, style);
+    }
+
+    const Cell& at(std::size_t x, std::size_t y) const {
+        return frameBuffer.at(x, y);
+    }
+
+    Buffer& getBuffer() {
+        return frameBuffer;
+    }
+
+    const Buffer& getBuffer() const {
+        return frameBuffer;
+    }
 };
