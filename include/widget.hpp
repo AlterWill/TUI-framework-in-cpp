@@ -77,7 +77,6 @@ class Widget {
 
   virtual std::vector<Widget*> getChildren() { return {}; }
 
-
   void setPadding(Insets p) {
     padding = p;
     setClip();
@@ -98,7 +97,8 @@ class Widget {
     setClip();
   }
 
-  virtual SizeConstraints measure() = 0;
+  virtual Size intrinsicSize() = 0;
+  virtual Size measure(const SizeConstraints& constraints) = 0;
   virtual void render(RenderContext& rendercontext) = 0;
   virtual void layout() = 0;
   virtual bool handleEvent(const Event&) { return false; }
