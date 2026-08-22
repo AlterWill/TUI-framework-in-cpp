@@ -14,12 +14,21 @@ enum class Alignment {
 
 class Text : public Widget {
  public:
-  std::string& text;
+  std::vector<std::string>& lines;
   Style style;
+  Alignment alignment;
 
-  Text(std::string& t, Style s = Style()) : text(t), style(s) {}
+  Text(std::vector<std::string>& l, Style s = Style(), Alignment a = Alignment::left)
+      : lines(l), style(std::move(s)), alignment(a) {}
 
-  void setText(std::string& t) { text = std::move(t); }
+  void setText(std::string& t) { lines = splitStringByChar(t, '\n'); }
+  void appendText(const std::string& t) {
+    auto Requestlines = splitStringByChar(t, '\n');
+    for (auto line : Requestlines) {
+      lines.push_back(line);
+    }
+  }
+  void addNewLine() { lines.push_back(""); }
 
   void setStyle(Style s) { style = std::move(s); }
 
@@ -27,32 +36,68 @@ class Text : public Widget {
 
   void layout() override {};
 
-  SizeConstraints measure() override {
-    SizeConstraints resultConstraint{Size{0, 0}, Size{0, 0}};
-    if (text.size() == 0) return resultConstraint;
-    std::vector<std::string> words = splitStringByChar(text, ' ');
-
-    std::size_t maximumWordLength{};
-    for (const std::string& word : words) {
-      if (word.size() < maximumWordLength) maximumWordLength = word.size();
+  Size intrinsicSize() override {
+    Size result{lines.size(), 0};
+    for (auto line : lines) {
+      result.setWidth(std::max(result.getWidth(), line.size()));
     }
-
-    resultConstraint.setMinSize(Size{words.size(),maximumWordLength});
-    resultConstraint.setMaxSize(Size{1,text.size()});
-
-    return resultConstraint;
+    return result;
   }
 
-  void render(RenderContext& rendercontext) override {
-    if( rendercontext.clip.getWidth() == 0 || rendercontext.clip.getHeight() == 0) return;
-    std::vector<std::string> words = convertStringToParagraph(text, rendercontext.clip.getWidth());
+  std::size_t getHeightForWidth(std::size_t width) {
+    std::size_t height{};
+    for (auto line : lines) {
+      height += findHeightForParagraph(line, width);
+    }
+    return height;
+  }
 
-    // we have the string stored in text 
-    // calculate what needs to be displayed by offset with this text 
-    // by using it as a cache 
-    //
-    // also we need to handle the text having unicode characters
-    //
-    // how to get the height and width tho?
+  // max Size -> each line is can be displayed as one line unles there is \n
+  // min Size -> longest word as width and height of all the lines as one word
+  Size measure(const SizeConstraints& constraints) override {
+    Size result{intrinsicSize()};
+
+    // clang-format off
+    result.setWidth(
+      std::clamp(
+        result.getWidth(),
+        constraints.getMinWidth(),
+        constraints.getMaxWidth()
+      )
+    );
+    result.setHeight(
+      std::clamp(
+        getHeightForWidth(result.getWidth()),
+        constraints.getMinHeight(),
+        constraints.getMaxHeight()
+      )
+    );
+    // clang-format on
+
+    return result;
+  }
+
+  // wrap each line that does not fit
+  void render(RenderContext& rendercontext) override {
+    if (rect.getHeight() == 0 || rect.getWidth() == 0) return;
+    Point writePoint{rect.getX(), rect.getY()};
+
+    for (auto line : lines) {
+      auto sentences = convertStringToParagraph(line, rect.getWidth());
+      for (auto sentence : sentences) {
+        size_t remainingSpace = std::max(static_cast<size_t>(0), rect.getWidth() - sentence.size());
+        if (Alignment::center == alignment) {
+          writePoint.setX(writePoint.getX() + (remainingSpace / 2));
+        } else if (Alignment::right == alignment) {
+          writePoint.setX(writePoint.getX() + remainingSpace);
+        }
+        for (auto ch : sentence) {
+          rendercontext.setCell(writePoint, Cell{ch, style});
+          writePoint.incrementX();
+        }
+        writePoint.incrementY();
+        writePoint.setX(rect.getX());
+      }
+    }
   };
 };
