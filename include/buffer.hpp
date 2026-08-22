@@ -32,6 +32,11 @@ class Buffer {
     cells[y * bufWidth + x] = cell;
   }
 
+  void setCell(Point point, const Cell& cell) {
+    if (point.getX() >= bufWidth || point.getY() >= bufHeight) return;
+    cells[point.getY() * bufWidth + point.getX()] = cell;
+  }
+
   void setGlyph(std::size_t x, std::size_t y, char32_t glyph) {
     if (x >= bufWidth || y >= bufHeight) return;
     cells[y * bufWidth + x].glyph = glyph;
