@@ -43,7 +43,7 @@ inline std::vector<std::string> splitVectorByChar(const std::vector<std::string>
   return lines;
 }
 
-inline std::vector<std::string> splitByLength(const std::string& text, int length) {
+inline std::vector<std::string> splitByLength(const std::string& text, std::size_t length) {
   std::vector<std::string> lines;
   if (length <= 0) {
     return lines;
@@ -51,7 +51,7 @@ inline std::vector<std::string> splitByLength(const std::string& text, int lengt
   std::string line = "";
   for (char ch : text) {
     line += ch;
-    if ((int)line.size() == length) {
+    if (line.size() == length) {
       lines.push_back(line);
       line.clear();
     }
@@ -67,6 +67,7 @@ inline std::vector<std::string> convertStringToParagraph(const std::string& text
   if (text.empty() || length <= 0) {
     return lines;
   }
+  if(text.size() <= length) return std::vector<std::string>(1,text);
   std::vector<std::string> words = splitStringByChar(text, ' ');
   std::string line;
   for (const std::string& word : words) {
@@ -96,5 +97,9 @@ inline std::vector<std::string> convertStringToParagraph(const std::string& text
     lines.push_back(line);
   }
   return lines;
+}
+
+inline std::size_t findHeightForParagraph(const std::string& text, std::size_t length){
+  return text.size()/length;
 }
 
