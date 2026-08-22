@@ -4,9 +4,10 @@ Follow these steps to clone, build, and run the C++ TUI framework demonstration.
 
 ## Prerequisites
 
-- **C++ Compiler**: GCC 10+ or Clang 11+ (supporting C++20 standard)
-- **Build System**: CMake (v3.20 or newer)
+- **C++ Compiler**: Clang (`clang++`) with C++20 support — the build system explicitly sets `CMAKE_CXX_COMPILER=clang++`
+- **Build System**: CMake 3.28 or newer
 - **Generator**: Ninja (recommended) or GNU Make
+- **Platform**: Linux — the only implemented terminal backend is `linux_backend`
 
 ## Quick Start
 
@@ -28,6 +29,15 @@ cmake --build build
 ./build/tui
 ```
 
-## Running Benchmarks and Debugging
+Press `q` to exit. The demo prints frame startup timing in milliseconds after exiting.
 
-When executing `./build/tui`, press `q` to terminate the application and output frame timing statistics (resize, layout, render, display, and event processing benchmark breakdowns).
+## Enabling Logging
+
+To enable diagnostic file logging, pass `-DENABLE_LOGGING=ON` at configure time:
+
+```bash
+cmake -G Ninja -B build -DENABLE_LOGGING=ON
+cmake --build build
+./build/tui
+# Diagnostic output will be written to tui_debug.log
+```
