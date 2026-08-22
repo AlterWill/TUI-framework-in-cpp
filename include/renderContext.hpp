@@ -5,34 +5,23 @@
 #include "style.hpp"
 
 struct RenderContext {
-private:
-    Buffer& frameBuffer;
+ private:
+  Buffer& frameBuffer;
 
-public:
-    explicit RenderContext(Buffer& buffer)
-        : frameBuffer(buffer) {}
+ public:
+  explicit RenderContext(Buffer& buffer) : frameBuffer(buffer) {}
 
-    void setCell(std::size_t x, std::size_t y, const Cell& cell) {
-        frameBuffer.setCell(x, y, cell);
-    }
+  void setCell(std::size_t x, std::size_t y, const Cell& cell) { frameBuffer.setCell(x, y, cell); }
 
-    void setGlyph(std::size_t x, std::size_t y, char32_t glyph) {
-        frameBuffer.setGlyph(x, y, glyph);
-    }
+  void setCell(Point point, const Cell& cell) { frameBuffer.setCell(point, cell); }
 
-    void setStyle(std::size_t x, std::size_t y, Style style) {
-        frameBuffer.setStyle(x, y, style);
-    }
+  void setGlyph(std::size_t x, std::size_t y, char32_t glyph) { frameBuffer.setGlyph(x, y, glyph); }
 
-    const Cell& at(std::size_t x, std::size_t y) const {
-        return frameBuffer.at(x, y);
-    }
+  void setStyle(std::size_t x, std::size_t y, Style style) { frameBuffer.setStyle(x, y, style); }
 
-    Buffer& getBuffer() {
-        return frameBuffer;
-    }
+  const Cell& at(std::size_t x, std::size_t y) const { return frameBuffer.at(x, y); }
 
-    const Buffer& getBuffer() const {
-        return frameBuffer;
-    }
+  Buffer& getBuffer() { return frameBuffer; }
+
+  const Buffer& getBuffer() const { return frameBuffer; }
 };
