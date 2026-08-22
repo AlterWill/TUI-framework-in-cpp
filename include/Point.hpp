@@ -16,4 +16,7 @@ struct Point {
   // Setters
   void setX(std::size_t val) { x = val; }
   void setY(std::size_t val) { y = val; }
+
+  void incrementX() { x++ ; }
+  void incrementY() { y++ ; }
 };
