@@ -1,49 +1,70 @@
 # TUI Library
 
-A C++ terminal UI framework built around a retained widget tree, incremental rendering, and a clean separation between layout, events, and terminal output.
+A C++ terminal UI framework with a retained widget tree, constraint-based layout, and incremental cell-diff rendering.
 
 ## Overview
 
-This project is a TUI framework for building terminal-based interfaces with reusable widgets, flexible layouts, and a declarative composition style. The goal is to make terminal UIs feel structured and scalable while remaining lightweight and fast.
+This is an early-stage TUI framework for building terminal-based interfaces in C++. It provides a structured widget hierarchy, several layout containers, styled text rendering, keyboard and mouse input, and an incremental rendering pipeline that only redraws cells that change between frames.
 
-The library currently provides core framework runtime features:
+The project is under active development. There are no interactive widgets yet (buttons, inputs, etc.), and some systems are partially implemented or stubbed.
 
-* Retained widget trees
-* Layout and render passes with constraint resolution
-* Framebuffer-based drawing with double buffering
-* ANSI output with 256-color and true-color support
-* Incremental redraw with dirty cell tracking
-* UTF-8 rendering & Unicode width calculation
-* Keyboard and mouse event handling with event propagation
-* Focus management and Tab navigation
-* Declarative React-like DSL
+## What Is Currently Implemented
 
-## Design Goals
+### Core Framework
 
-* **Retained widget tree**: Widgets maintain their identity, hierarchy, and state across frames.
-* **Separation of concerns**: Layout, rendering, input, focus, and styling operate cleanly as independent systems.
-* **Incremental rendering**: Only dirty cells that actually change between frames are flushed to the terminal.
-* **Extensibility**: Architectural support for containers (Row, Column, Grid, Flex, Stack, Scroll) and interactive widgets (Buttons, Inputs, Dialogs).
-* **Practicality**: High-performance runtime suitable for real-world terminal applications.
-* **Backend flexibility**: Abstraction layers for terminal backends (Linux backend with ANSI escape sequences).
+- `Widget` base class with `Rect` bounds, padding, margin, and focus state
+- `SingleChildWidget` and `MultiChildWidget` base classes for composing trees
+- `WidgetTree` — root manager that owns the widget tree and drives layout/render/display passes
+- Constraint-based layout via `SizeConstraints` (`minSize` / `maxSize`) and per-widget flex values
+- `Surface` — double-buffered framebuffer; holds `current` and `previous` cell grids, diffs them on each frame, and flushes only dirty cells to the terminal
 
-## Current State
+### Display Widgets
 
-The implementation includes:
+- `Text` — multi-line text widget with left-aligned rendering and word wrapping. Center and right alignment are stubbed but not yet implemented.
+- `Box` — bordered container with configurable border styles (`light`, `heavy`, `double`, `rounded`, `dashed`, `block`, `ascii`), padding, and background fill
 
-* `Widget` base class with hierarchy and bounds tracking (`Rect`, `Insets`)
-* `WidgetTree` for root layout orchestration and double-buffered rendering
-* Single-child (`SingleChildWidget`) and multi-child (`MultiChildWidget`) base containers
-* Constraint-based layout engine (`SizeConstraints`, `measure()`, `layout()`)
-* Container Layouts: `Row`, `Column`, `Grid`, `Flex`, `Stack`, `ScrollContainer`
-* Display Widgets: `Text`, `Box` (with customizable borders and padding)
-* Framebuffer & Cell state management (`frameBuffer.hpp`, `cell.hpp`)
-* Incremental double-buffering & dirty cell diffing
-* Terminal Backends: `linux_backend` with non-blocking raw mode support
-* Color output: `Colour`, `ColourPair`, `NamedColour`, 256-color, and True-color (RGB) support
-* Event Handling: Keyboard (`keyEvent`) and Mouse (`MouseEvent`) dispatch with propagation
-* Focus System: `FocusManager` with Tab / Shift-Tab focus traversal
-* React-inspired DSL (`react_dsl.hpp`) for declarative UI construction
+### Layout Containers
+
+- `Row` — horizontal layout; divides width equally among children, respects margin and padding
+- `Column` — vertical layout; divides height equally among children, respects margin and padding
+- `Grid` — 2D matrix layout with configurable row/column counts
+- `Flex` — flex-ratio-based layout along a row or column axis (note: constructor is currently private; cannot be instantiated directly)
+- `Stack` — overlapping layout; all children receive the same rect as the parent
+
+### Not Yet Implemented (Stubs)
+
+- `Scroll` (`ScrollContainer.hpp`) — class stub exists with no body; scroll offset and viewport logic are not written
+- `react_dsl.hpp` — file exists but is empty; no DSL is implemented
+
+### Rendering
+
+- `Surface` (`surface.hpp`) manages two `Buffer` instances (current and previous frames)
+- `Buffer` (`buffer.hpp`) — flat cell grid with `blitTo()` for region copies
+- `RenderContext` (`renderContext.hpp`) — thin wrapper passed to `render()`; widgets write cells through it. No clip stack is implemented.
+- Incremental display (`incrementDisplay()`) diffs current vs. previous buffer and emits only changed cells as ANSI escape sequences
+- Full redraw (`display()`) available for initial or forced full renders
+- `resizeBuffer()` re-queries terminal size and resets the buffers on dimension change
+
+### Color and Styling
+
+- `Colour` — ARGB color with true-color (24-bit), 256-color, and 16-color fallback output
+- `ColourPair` — foreground/background color pair
+- `NamedColour` — named palette constants
+- `Style` — color pair plus text style flags: Bold, Dim, Italic, Underline, Blink, Reverse, Hidden, StrikeThrough
+- Color tier auto-detected from `COLORTERM` and `TERM` environment variables at startup
+
+### Input and Events
+
+- `backend` — abstract terminal backend interface (`readEvent()`, `findTerminalSize()`, etc.)
+- `linux_backend` — Linux implementation: raw mode terminal, non-blocking stdin read, SGR mouse protocol
+- `keyEvent` — keyboard event with key code and modifier flags (Ctrl, Shift, Alt)
+- `MouseEvent` — mouse event with action (press, release, move, drag, scroll up/down), button, and coordinates
+- `EventDispatcher` (`eventHandler.hpp`) — dispatches keyboard events to the focused widget via bubble propagation; dispatches mouse events by hit-testing the widget tree with DFS
+- Focus traversal: `nextFocus()` / `previousFocus()` walk a flat focusable-widget list; wiring to Tab/Shift-Tab must be done in the application loop
+
+### Logging
+
+- `tui::Logger` — compile-time toggled singleton logger. Enable by building with `-DENABLE_LOGGING`. Writes to `tui_debug.log`. Zero-overhead when disabled (`if constexpr`).
 
 ## Directory Structure
 
@@ -51,139 +72,154 @@ The implementation includes:
 .
 ├── include/
 │   ├── backend.hpp              # Abstract terminal backend interface
-│   ├── linux_backend.hpp        # Linux terminal raw mode & event reader
-│   ├── cell.hpp                 # Framebuffer cell representation
-│   ├── colour.hpp               # RGB & 256-color definitions
-│   ├── colourPair.hpp           # Foreground / background color pairs
-│   ├── named_colour.hpp         # Standard palette enum constants
-│   ├── Point.hpp                # 2D coordinate structure
-│   ├── Rect.hpp                 # Rectangle bounds & geometry helper
+│   ├── linux_backend.hpp        # Linux raw mode terminal & SGR mouse input
+│   ├── buffer.hpp               # Flat cell grid (Buffer class)
+│   ├── surface.hpp              # Double-buffered framebuffer & differential flush (Surface)
+│   ├── renderContext.hpp        # Thin render pass context passed to widgets
+│   ├── cell.hpp                 # Framebuffer cell (glyph + Style)
+│   ├── colour.hpp               # ARGB color with true-color/256/16 output
+│   ├── colourPair.hpp           # Foreground/background color pair
+│   ├── named_colour.hpp         # Named color palette constants
+│   ├── style.hpp                # Style struct (ColourPair + text style flags)
+│   ├── Point.hpp                # 2D coordinate
+│   ├── Rect.hpp                 # Rectangle bounds
 │   ├── Size.hpp                 # 2D dimensions
-│   ├── SizeConstraints.hpp      # Min/max layout constraints
-│   ├── insets.hpp               # Padding & margin dimensions
-│   ├── style.hpp                # Widget styling attributes
-│   ├── renderContext.hpp        # Render buffer drawing context & clipping
-│   ├── frameBuffer.hpp          # Double buffer & cell differential flusher
-│   ├── event.hpp                # Keyboard and mouse event primitives
-│   ├── eventHandler.hpp         # Event dispatcher & focus manager
-│   ├── widget.hpp               # Abstract base Widget class
-│   ├── widgetTree.hpp           # Root tree manager & render loop driver
-│   ├── singleChildWidget.hpp    # Single child widget base class
-│   ├── multiChildWidget.hpp     # Multi child widget base class
-│   ├── text.hpp                 # Multi-line text & alignment widget
+│   ├── SizeConstraints.hpp      # Min/max layout constraints & LayoutProperties
+│   ├── insets.hpp               # Padding/margin dimensions
+│   ├── event.hpp                # keyEvent, MouseEvent, Event variant
+│   ├── eventHandler.hpp         # EventDispatcher with focus traversal
+│   ├── widget.hpp               # Abstract Widget base class
+│   ├── widgetTree.hpp           # WidgetTree: root manager & render loop driver
+│   ├── singleChildWidget.hpp    # Single-child widget base
+│   ├── multiChildWidget.hpp     # Multi-child widget base
+│   ├── text.hpp                 # Text widget (left alignment implemented)
 │   ├── box.hpp                  # Bordered container widget
-│   ├── RowContainer.hpp         # Horizontal linear layout
-│   ├── ColumnContainer.hpp      # Vertical linear layout
-│   ├── GridContainer.hpp        # Matrix grid layout
-│   ├── FlexContainer.hpp        # Flexbox ratio-based layout
-│   ├── StackContainer.hpp       # Z-index / overlapping stack container
-│   ├── ScrollContainer.hpp      # Viewport scroll container
-│   ├── react_dsl.hpp            # Declarative DSL helper macro/functions
-│   ├── splitParagraphs.hpp      # UTF-8 text wrapping helpers
-│   ├── unicode.hpp              # UTF-8 character decoding & width calculation
+│   ├── RowContainer.hpp         # Horizontal layout (Row)
+│   ├── ColumnContainer.hpp      # Vertical layout (Column)
+│   ├── GridContainer.hpp        # Grid layout (Grid)
+│   ├── FlexContainer.hpp        # Flex-ratio layout (Flex) — constructor currently private
+│   ├── StackContainer.hpp       # Overlapping stack layout (Stack)
+│   ├── ScrollContainer.hpp      # Scroll container stub (not yet implemented)
+│   ├── react_dsl.hpp            # Empty — DSL not yet implemented
+│   ├── splitParagraphs.hpp      # String splitting utilities
+│   ├── unicode.hpp              # UTF-8 encode/decode & display-width calculation
+│   ├── logger.hpp               # Compile-time-toggled file logger
 │   └── tools.hpp                # Terminal control escape utilities
 ├── src/
-│   └── main.cpp                 # Application entry point & demo benchmark
-├── CMakeLists.txt               # Build configuration
-├── README.md                    # Framework overview & docs
-├── ROADMAP.md                   # Feature development roadmap
-├── TODO.md                      # Detailed task roadmap
-└── plan.md                      # Architecture design notes & raw ideas
+│   └── main.cpp                 # Demo: Text widget render loop with frame timing output
+├── CMakeLists.txt               # Build configuration (requires clang++)
+├── README.md
+├── ROADMAP.md
+├── TODO.md
+└── plan.md                      # Architecture notes & future design ideas
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-* C++20 compliant compiler (GCC, Clang)
-* CMake 3.20+
-* Ninja (recommended) or Make
+- C++20 compliant **Clang** compiler (`clang++`) — the build explicitly sets `CMAKE_CXX_COMPILER=clang++`
+- CMake 3.28+
+- Ninja (recommended) or Make
+- Linux terminal — the only implemented backend is `linux_backend`
 
-### Building and Running
+### Building
 
 ```bash
-# Clone the repository
 git clone https://github.com/AlterWill/TUI.git
 cd TUI
 
-# Clean any existing build directory (optional)
-rm -rf build
-
-# Configure using CMake with Ninja generator
 cmake -G Ninja -B build
-
-# Build the binary
 cmake --build build
 
-# Run the application demo
 ./build/tui
 ```
 
-## Render Flow
+Press `q` to exit. The demo prints startup timing in milliseconds after exiting.
 
-A frame follows this execution pipeline:
+### Enabling the Logger
 
-1. Read input events from `Backend` non-blocking stdin
-2. Convert raw escape codes into `KeyEvent` / `MouseEvent`
-3. Dispatch events to focused widget or propagate down widget tree
-4. Update application state on user input
-5. Run layout pass: `measure()` constraints and set target `Rect` bounds
-6. Run render pass: widgets write styled glyphs into `RenderContext`
-7. Diff current `Framebuffer` against previous frame to identify dirty cells
-8. Flush dirty cell ANSI color & cursor escape sequences to the terminal backend
+```bash
+cmake -G Ninja -B build -DENABLE_LOGGING=ON
+cmake --build build
+./build/tui
+# Diagnostic output written to tui_debug.log
+```
 
-## Declarative DSL Example
+## Render Pipeline
+
+Each frame follows this sequence:
+
+1. `resizeBuffer()` — re-queries terminal dimensions; reallocates buffers if size changed
+2. `layout(rect)` — recursively sets `Rect` bounds on each widget from the root down
+3. `render()` — widgets write styled cells into `RenderContext` (wraps the current `Buffer`)
+4. `incrementDisplay()` — diffs `current` vs `previous` buffer; emits ANSI sequences only for changed cells; copies current to previous
+5. `readEvent()` — non-blocking stdin read; returns `keyEvent` or `MouseEvent` (or nothing)
+
+## Usage Example
 
 ```cpp
-#include "react_dsl.hpp"
-#include "tui.hpp" // main framework include
+#include "linux_backend.hpp"
+#include "text.hpp"
+#include "tools.hpp"
+#include "widgetTree.hpp"
 
 int main() {
-    // Declarative UI tree creation using DSL syntax
-    auto app = box(
-        Column({
-            Text("TUI Framework Demo", Style{.fg = NamedColour::Cyan}, Alignment::center),
-            Row({
-                Text("Left Column"),
-                Text("Right Column")
-            })
-        })
+    linux_backend terminal(/*keyboard=*/true, /*mouse=*/true);
+
+    tools::alternateScreenBuffer();
+    tools::clearScreen();
+    tools::invisiableCursor();
+
+    auto root = std::make_unique<Text>(
+        "Hello, TUI!",
+        Style{.colours = {.fg = NamedColour::Orange}},
+        Alignment::left
     );
 
-    // Run main application loop
-    // (See src/main.cpp for full integration example)
+    WidgetTree tree(std::move(root), terminal);
+
+    bool running = true;
+    while (running) {
+        tools::cursorHomePosition();
+        tree.fb.resizeBuffer();
+        tree.layout({0, 0, tree.fb.terminalData.row, tree.fb.terminalData.col});
+        tree.render();
+        tree.display();
+
+        auto event = terminal.readEvent();
+        if (event) {
+            if (auto key = std::get_if<keyEvent>(&event.value())) {
+                if (key->key == 'q') running = false;
+            }
+        }
+    }
+
+    tools::visiableCursor();
+    tools::clearScreen();
+    return 0;
 }
 ```
 
-## Roadmap Overview
+## Current Limitations
 
-### Milestone 1: MVP Runtime (Completed ✅)
-* [x] Retained widget tree & base classes
-* [x] Layout pass (`measure` & `layout`)
-* [x] Framebuffer & UTF-8 renderer
-* [x] Basic containers (`Row`, `Column`, `Grid`)
-* [x] Double buffering & dirty cell diffing
-* [x] ANSI color & 256 / true-color output
+- **Linux only** — no Windows or macOS backend
+- **No interactive widgets** — no Button, TextInput, Checkbox, etc.
+- **`Scroll` container is a stub** — the class exists but has no working implementation
+- **`Flex` constructor is private** — `Flex` cannot be instantiated directly
+- **`Text` only renders left-aligned text** — center and right alignment are not implemented
+- **No terminal resize events** — `resizeBuffer()` detects size changes on each frame, but there is no `SIGWINCH`-based event dispatch
+- **No theme or global styling system**
+- **No focus scopes** — Tab traversal is global across the entire widget tree
+- **No automated tests** and no headless backend for CI testing
+- **No DSL** — `react_dsl.hpp` is an empty file
 
-### Milestone 2: Interactive Core (In Progress 🚧)
-* [x] Keyboard & Mouse input handling
-* [x] Event dispatcher & propagation
-* [x] Focus manager & Tab traversal
-* [x] Flex, Stack, and Scroll layout containers
-* [x] Constraint-based layout resolution
-* [ ] Terminal resize handling (`SIGWINCH`)
-* [ ] Focus scopes & modal focus containment
-* [ ] Theme manager & global styling rules
+## Further Reading
 
-### Milestone 3: Standard Widget Library (Planned 📋)
-* [ ] Interactive controls: `Button`, `Checkbox`, `Radio`, `Slider`
-* [ ] Input controls: `TextInput`, `TextArea`, `PasswordInput`
-* [ ] Display controls: `ProgressBar`, `Spinner`, `Divider`, `Spacer`
-* [ ] Data controls: `ListView`, `Table`, `TreeView`, `Tabs`
-* [ ] Dialogs & Overlays: `Popup`, `Modal`, `Tooltip`, `Notification`
-
-See [ROADMAP.md](file:///home/alterwill/Github/TUI/ROADMAP.md) for detailed phase breakdowns and [TODO.md](file:///home/alterwill/Github/TUI/TODO.md) for active developer tasks.
+- [ROADMAP.md](ROADMAP.md) — development milestones and planned features
+- [TODO.md](TODO.md) — concrete implementation tasks with completion criteria
+- [plan.md](plan.md) — architecture notes and future design ideas
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License — see the LICENSE file for details.

@@ -18,33 +18,35 @@ The foundation of the framework.
 * [x] Multi-child widgets
 * [x] Layout pass
 * [x] Render pass
-* [x] Framebuffer
+* [x] Framebuffer (`Surface` + `Buffer`)
 * [x] UTF-8 rendering
-* [x] Declarative DSL
-* [x] Text widget
-* [x] Box widget
+* [x] Text widget (left alignment only; center/right are stubs)
+* [x] Box widget (multiple border styles, padding, background fill)
 * [x] Row layout
 * [x] Column layout
 * [x] Grid layout
 * [x] Margin support
 * [x] Padding support
+* [ ] Declarative DSL (`react_dsl.hpp` is currently empty)
 
-## Phase 2 — Rendering Engine ✅
+## Phase 2 — Rendering Engine 🚧
 
 Improve how frames are produced and displayed.
 
 * [x] ANSI style output
-* [x] Incremental rendering
+* [x] Incremental rendering (cell-diff via `incrementDisplay()`)
 * [x] Dirty cell tracking
-* [x] Double buffering
-* [x] Clipping
+* [x] Double buffering (`Surface` holds `current` and `previous` buffers)
+* [ ] Clip rectangle stack in `RenderContext` (not yet implemented)
 * [ ] Off-screen rendering
 
 ### Terminal Backend
 
 * [x] 256-color support
 * [x] True-color support
-* [x] Backend abstraction
+* [x] Backend abstraction (`backend` abstract class)
+* [x] Linux backend (`linux_backend`: raw mode + SGR mouse)
+* [ ] Headless / dummy terminal backend (for CI/CD unit testing)
 
 ---
 
@@ -52,54 +54,54 @@ Improve how frames are produced and displayed.
 
 *Goal: Keyboard input, focus handling, flexible layouts, and theming.*
 
-## Phase 3 — Input System
+## Phase 3 — Input System 🚧
 
 Everything related to user input and events.
 
 * [x] Keyboard input
-* [x] Mouse input
+* [x] Mouse input (press, release, move, drag, scroll)
 * [ ] Clipboard integration
-* [ ] Terminal resize events (`SIGWINCH`)
+* [ ] Terminal resize events (`SIGWINCH`) — size is re-queried each frame via `resizeBuffer()`, but no event is dispatched
 
 ### Event System
 
-* [x] Event objects
-* [x] Event dispatcher
-* [x] Event propagation
-* [x] Event bubbling
+* [x] Event objects (`keyEvent`, `MouseEvent` as `std::variant<keyEvent, MouseEvent>`)
+* [x] Event dispatcher (`EventDispatcher` in `eventHandler.hpp`)
+* [x] Event bubbling (dispatched up through `parent` chain)
 * [ ] Event capture
 
 ### Focus System
 
-* [x] Focus manager
-* [x] Focus traversal
-* [x] Tab navigation
-* [ ] Focus scopes
+* [x] Focus traversal (`EventDispatcher::nextFocus` / `previousFocus`)
+* [x] Tab navigation (application must wire Tab key to `nextFocus`/`previousFocus`)
+* [ ] Focus scopes (restricting Tab traversal to a subtree)
 
-## Phase 4 — Layout Engine
+## Phase 4 — Layout Engine 🚧
 
 Make layouts more flexible and expressive.
 
-* [x] Measure pass
-* [x] Measure calculation
-* [x] RenderContext integration
+* [x] Measure pass (`measure()` on each widget)
+* [x] Layout pass (`layout()` / `setRectForChildren()`)
+* [x] `RenderContext` passed through render pass
 
 ### Constraints
 
 * [x] Fixed size
-* [x] Preferred size
-* [x] Fill / expand
-* [x] Min / max size
-* [x] Percentage sizing
-* [x] Child alignment
+* [x] Min / max size (`SizeConstraints`)
+* [x] Flex ratios (`LayoutProperties::flex`)
+* [x] Fill / expand (flex < 0 in `Flex` container)
+* [ ] Percentage sizing
+* [x] Child alignment (via per-child margin)
 
 ### Containers
 
-* [x] Flex container
-* [x] Stack container
-* [x] Scroll container
+* [x] Row container (`Row`)
+* [x] Column container (`Column`)
+* [x] Grid container (`Grid`)
+* [x] Stack container (`Stack`)
+* [ ] Flex container (`Flex`) 
+* [ ] Scroll container (`Scroll` stub exists; logic not implemented)
 * [ ] Overlay container
-* [ ] Viewports
 * [ ] Split pane
 
 ## Phase 5 — Styling System
@@ -108,7 +110,8 @@ Move from per-widget styling to reusable themes.
 
 ### Styles
 
-* [x] Per-widget style
+* [x] Per-widget style (`Style` with `ColourPair` and text style flags)
+* [x] Text style flags: Bold, Dim, Italic, Underline, Blink, Reverse, Hidden, StrikeThrough
 
 ### Themes
 
@@ -120,16 +123,10 @@ Move from per-widget styling to reusable themes.
 ### Widget States
 
 * [ ] Hover
-* [ ] Focused
+* [ ] Focused visual rendering
 * [ ] Active
 * [ ] Disabled
 * [ ] Selected
-
-### Style System
-
-* [ ] Style classes
-* [ ] CSS-like selectors
-* [ ] State-dependent styles
 
 ---
 
@@ -197,23 +194,24 @@ Transient UI components.
 
 Improve runtime efficiency.
 
-* [ ] Dirty widget rendering
+* [ ] Dirty widget rendering (skip layout/render for clean subtrees)
 * [ ] Layout caching
 * [ ] Render caching
-* [ ] Frame timing
+* [ ] Frame timing infrastructure
 * [ ] Memory optimizations
 
 ## Phase 12 — Developer Experience
 
 Improve usability for library users and contributors.
 
-* [ ] Documentation
+* [x] Diagnostic logger (`tui::Logger`, enabled via `-DENABLE_LOGGING` compile flag)
+* [ ] API documentation
 * [ ] Example gallery
-* [ ] Unit tests
+* [ ] Unit tests (layout math, UTF-8, event propagation)
+* [ ] Headless testing backend (in-memory terminal for CI/CD)
 * [ ] Benchmarks
-* [ ] CI/CD
+* [ ] CI/CD pipeline (GitHub Actions)
 * [ ] Package manager support
-* [ ] Better compiler diagnostics
 
 ---
 
@@ -223,7 +221,7 @@ Improve usability for library users and contributors.
 
 ## Phase 13 — Future Vision
 
-* [ ] Image widget (ASCII / Unicode)
+* [ ] Image widget (ASCII / Unicode art)
 * [ ] Animation system
 * [ ] Async task integration
 * [ ] Virtualized list view
