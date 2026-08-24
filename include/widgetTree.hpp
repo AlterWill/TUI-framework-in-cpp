@@ -36,10 +36,17 @@ class WidgetTree {
   }
 
   void layout(const Rect& r) {
-    if (!root) {
-      return;
-    }
-    root->setRect(r.x, r.y, r.height, r.width);
+    if (!root) return;
+    root->setRect(
+        r.x + root->margin.getLeft(),
+        r.y + root->margin.getTop(),
+        (r.height < root->margin.getTop() + root->margin.getBottom())
+            ? 0
+            : r.height - root->margin.getTop() - root->margin.getBottom(),
+        (r.width < root->margin.getLeft() + root->margin.getRight())
+            ? 0
+            : r.width - root->margin.getLeft() - root->margin.getRight()
+    );
     // Size prefrededSize = root->measure(SizeConstraints{Size{0,0},Size{rect.getHeight(),rect.getWidth()}});
     root->layout();
   }
