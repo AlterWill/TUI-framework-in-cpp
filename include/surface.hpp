@@ -103,6 +103,8 @@ class Surface {
       );
     }
 
+
+    displayOutput += ESCAPE_SEQUENCE_ESC + "[0m";
     std::cout << displayOutput << std::flush;
   }
 
@@ -137,7 +139,7 @@ class Surface {
     }
 
     previous.cells = current.cells;
-
+    displayOutput += ESCAPE_SEQUENCE_ESC + "[0m";
     std::cout << displayOutput << std::flush;
   }
 
