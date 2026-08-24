@@ -84,6 +84,7 @@ class Widget {
 
   void setMargin(Insets m) { margin = m; }
 
+  Rect getRect(){ return rect;}
   void setRect(std::size_t x, std::size_t y, std::size_t height, std::size_t width) {
     rect.x = x;
     rect.y = y;
