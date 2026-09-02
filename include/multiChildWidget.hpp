@@ -57,6 +57,7 @@ class MultiChildWidget : public Widget {
   void render(RenderContext& renderContext) override {
     for (auto& child : children) {
       if (child.widget) {
+        renderContext.setRect(child.rect);
         child.widget->render(renderContext);
       }
     }

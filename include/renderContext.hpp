@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Rect.hpp"
 #include "buffer.hpp"
 #include "cell.hpp"
 #include "style.hpp"
@@ -7,9 +8,13 @@
 struct RenderContext {
  private:
   Buffer& frameBuffer;
+  Rect currentRect{};
 
  public:
-  explicit RenderContext(Buffer& buffer) : frameBuffer(buffer) {}
+  explicit RenderContext(Buffer& buffer, Rect r = {}) : frameBuffer(buffer), currentRect(r) {}
+
+  void setRect(const Rect& r) { currentRect = r; }
+  const Rect& getRect() const { return currentRect; }
 
   void setCell(std::size_t x, std::size_t y, const Cell& cell) { frameBuffer.setCell(x, y, cell); }
 
