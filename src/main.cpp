@@ -2,17 +2,17 @@
 
 #include <chrono>
 #include <iostream>
-#include <map>
 #include <memory>
 
-#include "ColumnContainer.hpp"
-#include "linux_backend.hpp"
-#include "text.hpp"
-#include "tools.hpp"
-#include "widgetTree.hpp"
+#include "widgets/box.hpp"
+#include "terminal/linux_backend.hpp"
+#include "widgets/text.hpp"
+#include "terminal/tools.hpp"
+#include "core/widgetTree.hpp"
 
 struct AppData {
-  std::string str{};
+  std::vector<std::u32string> lines{U"HHelloHelloHelloHelloHelloHelloHelloHelloHelloello"};
+  std::string boxTitle{"what"};
 };
 
 class Timer {
@@ -44,48 +44,41 @@ int main() {
 
   linux_backend terminal(true, true);
 
-  // auto column = std::make_unique<Column>();
-
-  /*column->addChild(
-      std::make_unique<Text>(
-          "TUI Library Demo",
-          Style{.colours = {.fg = NamedColour::Cyan}, .textStyle = static_cast<uint8_t>(TextStyle::Bold)},
-          Alignment::center
-      )
-  );
-
-  column->addChild(std::make_unique<Text>("Keyboard + Mouse enabled", Style{}, Alignment::center));
-
-  */
-  // auto rootBox = std::make_unique<Box>(std::move(column), boxStyle::rounded, ColourPair{.fg = NamedColour::Green});
-
   tools::alternateScreenBuffer();
   tools::clearScreen();
   tools::invisiableCursor();
 
   AppData data{};
-  auto textParagraph =
-      std::make_unique<Text>(data.str, Style{.colours = {.fg = NamedColour::Orange}}, Alignment::center);
+  auto textParagraph = std::make_unique<Text>(data.lines, Style{.colours = {.fg = NamedColour::Aqua,.bg = NamedColour::RebeccaPurple}}, Alignment::left);
+  textParagraph->setPadding(Insets{0,0,5,5});
+  textParagraph->setMargin(Insets{5,5,0,0});
 
-  WidgetTree tree(std::move(textParagraph), terminal);
+  auto box = std::make_unique<Box>(std::move(textParagraph),data.boxTitle,Alignment::right,false,boxStyle::heavy,ColourPair{.fg = NamedColour::Aqua,.bg = NamedColour::Grey});
+  box->setPadding(Insets{0,5,0,0});
+  box->setMargin(Insets{5,5,5,0});
+
+  WidgetTree tree(std::move(box), terminal);
 
   bool running = true;
-  std::size_t limit = 5;
-  std::size_t i = 0;
-
   times.push_back(timer.elapsed_ms());
-  while (i < limit) {
+  while (running) {
     times.push_back(timer.elapsed_ms());
-    data.str += "aaaa aaaaaaaa aaaaaaaaaaaa";
+
+    data.lines.push_back(U"HHelloHelloHelloHelloHelloHelloHelloHelloHelloello");
     tools::cursorHomePosition();
     times.push_back(timer.elapsed_ms());
+
     tree.fb.resizeBuffer();
     times.push_back(timer.elapsed_ms());
+
     tree.layout({0, 0, tree.fb.terminalData.row, tree.fb.terminalData.col});
     times.push_back(timer.elapsed_ms());
+
     tree.render();
     times.push_back(timer.elapsed_ms());
-    tree.display();
+
+    //tree.display();
+    tree.incrementDisplay();
     times.push_back(timer.elapsed_ms());
 
     auto event = terminal.readEvent();
@@ -107,7 +100,6 @@ int main() {
 
     times.push_back(timer.elapsed_ms());
     //usleep(10000);
-    i++;
   }
 
   tools::visiableCursor();
@@ -118,15 +110,5 @@ int main() {
   tools::cursorHomePosition();
 
   std::cout << "Before While :" << times[0] << '\n';
-  for (i = 1; i < times.size(); i += 8) {
-    std::cout << "After While " << (i - 1) / 6 << " : " << times[i] << '\n';
-    std::cout << "Before Resize :" << times[i + 1] << '\n';
-    std::cout << "After  Resize :" << times[i + 2] << '\n';
-    std::cout << "layout        :" << times[i + 3] << '\n';
-    std::cout << "render        :" << times[i + 4] << '\n';
-    std::cout << "display       :" << times[i + 5] << '\n';
-    std::cout << "event         :" << times[i + 6] << '\n';
-    std::cout << "what event    :" << times[i + 7] << '\n';
-  }
   return 0;
 }

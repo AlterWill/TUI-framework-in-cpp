@@ -159,10 +159,10 @@ Each frame follows this sequence:
 ## Usage Example
 
 ```cpp
-#include "linux_backend.hpp"
-#include "text.hpp"
-#include "tools.hpp"
-#include "widgetTree.hpp"
+#include "terminal/linux_backend.hpp"
+#include "widgets/text.hpp"
+#include "terminal/tools.hpp"
+#include "core/widgetTree.hpp"
 
 int main() {
     linux_backend terminal(/*keyboard=*/true, /*mouse=*/true);
