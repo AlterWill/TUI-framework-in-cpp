@@ -30,7 +30,7 @@ inline constexpr boxOutlineDetails ascii = {U'-', U'|', U'+', U'+', U'+', U'+'};
 class Box : public SingleChildWidget {
  public:
   std::string title;
-  Alignment alignment;
+  HorizontalAlignment alignment;
   bool titleTop{true};
   boxOutlineDetails outline;
   std::size_t borderSize{1};
@@ -44,7 +44,7 @@ class Box : public SingleChildWidget {
 
   Box(std::unique_ptr<Widget> mainChild,
       const std::string& t,
-      Alignment a = Alignment::left,
+      HorizontalAlignment a = HorizontalAlignment::Left,
       bool tt = true,
       boxOutlineDetails o = boxStyle::light,
       ColourPair c = ColourPair{},
@@ -58,64 +58,72 @@ class Box : public SingleChildWidget {
         colours(c) {}
 
   Size intrinsicSize() override {
-    if (!child) return Size{0, 0};
-    Size result{child->intrinsicSize()};
+    if (!child.widget) return Size{0, 0};
+    Size result{child.widget->intrinsicSize()};
     result.setHeight(
-        result.getHeight() + padding.getTop() + padding.getBottom() + child->margin.getTop() +
-        child->margin.getBottom() + (2 * borderSize)
+        result.getHeight() + padding.getTop() + padding.getBottom() + child.margin.getTop() +
+        child.margin.getBottom() + (2 * borderSize)
     );
     result.setWidth(
-        result.getWidth() + padding.getLeft() + padding.getRight() + child->margin.getLeft() +
-        child->margin.getRight() + (2 * borderSize)
+        result.getWidth() + padding.getLeft() + padding.getRight() + child.margin.getLeft() +
+        child.margin.getRight() + (2 * borderSize)
     );
     return result;
   }
 
-  // possible to write the function in a better way by moving the if child higher
   Size measure(const SizeConstraints& constraints) override {
-    std::size_t extraWidth =
-        (2 * borderSize) + padding.left + padding.right + child->margin.getLeft() + child->margin.getRight();
-    std::size_t extraHeight =
-        (2 * borderSize) + padding.top + padding.bottom + child->margin.getTop() + child->margin.getBottom();
+    std::size_t extraWidth = (2 * borderSize) + padding.getLeft() + padding.getRight() +
+                             (child.widget ? (child.margin.getLeft() + child.margin.getRight()) : 0);
+    std::size_t extraHeight = (2 * borderSize) + padding.getTop() + padding.getBottom() +
+                              (child.widget ? (child.margin.getTop() + child.margin.getBottom()) : 0);
 
-    // A box must be at least large enough to draw its borders (min 2x2 if borderSize=1)
+    // If the constraints cannot even accommodate borders & padding/margins, cannot display.
     if (constraints.getMaxWidth() < extraWidth || constraints.getMaxHeight() < extraHeight) {
       return Size{0, 0};
     }
 
-    if (child) {
+    std::size_t contentWidth = 0;
+    std::size_t contentHeight = 0;
+
+    if (child.widget) {
       SizeConstraints childConstraints;
-      childConstraints.setMinWidth(constraints.getMinWidth() > extraWidth ? constraints.getMinWidth() - extraWidth : 0);
       childConstraints.setMinHeight(
           constraints.getMinHeight() > extraHeight ? constraints.getMinHeight() - extraHeight : 0
       );
-      childConstraints.setMaxWidth(constraints.getMaxWidth() - extraWidth);
       childConstraints.setMaxHeight(constraints.getMaxHeight() - extraHeight);
+      childConstraints.setMinWidth(
+          constraints.getMinWidth() > extraWidth ? constraints.getMinWidth() - extraWidth : 0
+      );
+      childConstraints.setMaxWidth(constraints.getMaxWidth() - extraWidth);
 
-      Size childSize = child->measure(childConstraints);
-
-      // If the child requires 0 width or 0 height, it cannot be displayed.
+      Size childSize = child.widget->measure(childConstraints);
       if (childSize.getWidth() == 0 || childSize.getHeight() == 0) {
         return Size{0, 0};
       }
 
-      std::size_t width =
-          std::clamp(childSize.getWidth() + extraWidth, constraints.getMinWidth(), constraints.getMaxWidth());
-      std::size_t height =
-          std::clamp(childSize.getHeight() + extraHeight, constraints.getMinHeight(), constraints.getMaxHeight());
-      return Size{height, width};
+      contentWidth = childSize.getWidth();
+      contentHeight = childSize.getHeight();
     }
 
-    // Empty box returns just the border/padding size if it fits, clamped to constraints
-    return Size{0, 0};
+    std::size_t totalWidth =
+        std::clamp(contentWidth + extraWidth, constraints.getMinWidth(), constraints.getMaxWidth());
+    std::size_t totalHeight =
+        std::clamp(contentHeight + extraHeight, constraints.getMinHeight(), constraints.getMaxHeight());
+
+    return Size{totalHeight, totalWidth};
   }
 
   void drawBorder(RenderContext& rendercontext) {
-    if (rect.width < child->margin.getLeft() + child->margin.getRight() + padding.getLeft() + padding.getRight() +
-                         (2 * borderSize) ||
-        rect.height < child->margin.getTop() + child->margin.getBottom() + padding.getTop() + padding.getBottom() +
-                          (2 * borderSize))
+    const Rect& rect = rendercontext.getRect();
+
+    std::size_t extraW = (2 * borderSize) + padding.getLeft() + padding.getRight() +
+                         (child.widget ? (child.margin.getLeft() + child.margin.getRight()) : 0);
+    std::size_t extraH = (2 * borderSize) + padding.getTop() + padding.getBottom() +
+                         (child.widget ? (child.margin.getTop() + child.margin.getBottom()) : 0);
+
+    if (rect.width < extraW || rect.height < extraH) {
       return;
+    }
 
     std::size_t left = rect.x;
     std::size_t top = rect.y;
@@ -149,9 +157,9 @@ class Box : public SingleChildWidget {
       std::size_t startingX = left + 1;
       std::size_t startingY = top;
 
-      if (alignment == Alignment::center) {
+      if (alignment == HorizontalAlignment::Center) {
         startingX += remainingSpace / 2;
-      } else if (alignment == Alignment::right) {
+      } else if (alignment == HorizontalAlignment::Right) {
         startingX += remainingSpace;
       }
       if (!titleTop) {
@@ -179,24 +187,23 @@ class Box : public SingleChildWidget {
   }
 
   void render(RenderContext& rendercontext) override {
-    if (!child) return;
     drawBorder(rendercontext);
-    setRectForChild();
-    child->render(rendercontext);
-  }
+    if (!child.widget) return;
 
-  void setRectForChild() override {
-    if (!child) return;
-
+    const Rect& rect = rendercontext.getRect();
     std::size_t extraW =
-        (2 * borderSize) + padding.getLeft() + padding.getRight() + child->margin.getLeft() + child->margin.getRight();
+        (2 * borderSize) + padding.getLeft() + padding.getRight() + child.margin.getLeft() + child.margin.getRight();
     std::size_t extraH =
-        (2 * borderSize) + padding.getTop() + padding.getBottom() + child->margin.getTop() + child->margin.getBottom();
-    child->setRect(
-        rect.x + borderSize + padding.left + child->margin.left,
-        rect.y + borderSize + padding.top + child->margin.top,
+        (2 * borderSize) + padding.getTop() + padding.getBottom() + child.margin.getTop() + child.margin.getBottom();
+
+    child.rect = Rect{
+        rect.x + borderSize + padding.getLeft() + child.margin.getLeft(),
+        rect.y + borderSize + padding.getTop() + child.margin.getTop(),
         (rect.height > extraH) ? (rect.height - extraH) : 0,
         (rect.width > extraW) ? (rect.width - extraW) : 0
-    );
+    };
+
+    rendercontext.setRect(child.rect);
+    child.widget->render(rendercontext);
   }
 };
