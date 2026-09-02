@@ -1,68 +1,79 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
+#include "layoutNode.hpp"
 #include "renderContext.hpp"
 #include "widget.hpp"
-#include <memory>
 
 class SingleChildWidget : public Widget {
-public:
-  std::unique_ptr<Widget> child;
+ public:
+  LayoutNode child;
 
-  SingleChildWidget(std::unique_ptr<Widget> c) : child(std::move(c)) {
-    if (child) {
-      child->parent = this;
+  SingleChildWidget() = default;
+
+  explicit SingleChildWidget(std::unique_ptr<Widget> c) {
+    child.widget = std::move(c);
+    if (child.widget) {
+      child.widget->parent = this;
     }
   }
 
-  std::size_t childrenSize(){
-    return (child)? 1 : 0;
+  explicit SingleChildWidget(LayoutNode c) : child(std::move(c)) {
+    if (child.widget) {
+      child.widget->parent = this;
+    }
   }
 
-  std::vector<Widget*> getChildren() override{
-    if(child) return { child.get() };
+  std::size_t childrenSize() { return child.widget ? 1 : 0; }
+
+  std::vector<Widget*> getChildren() override {
+    if (child.widget) return {child.widget.get()};
     return {};
   }
 
   void setChild(std::unique_ptr<Widget> c) {
-    child = std::move(c);
-    child->parent = this;
-  }
-
-  void removeChild() { child = nullptr; }
-
-  SizeConstraints buildConstraints(){
-    return SizeConstraints{Size{0,0},Size{rect.getHeight(),rect.getWidth()}};
-  }
-
-  Size measure(const SizeConstraints& constraints) override{
-    if(child){
-      return child->measure(constraints);
+    child.widget = std::move(c);
+    if (child.widget) {
+      child.widget->parent = this;
     }
-    return Size{0,0};
   }
 
-  virtual Rect computeRect(Size& ) { return Rect{};}
+  void setChild(LayoutNode c) {
+    child = std::move(c);
+    if (child.widget) {
+      child.widget->parent = this;
+    }
+  }
 
-  virtual void setRectForChild(){}
+  void removeChild() { child.widget = nullptr; }
+
+  Size intrinsicSize() override {
+    if (child.widget) {
+      return child.widget->intrinsicSize();
+    }
+    return Size{0, 0};
+  }
+
+  Size measure(const SizeConstraints& constraints) override {
+    if (child.widget) {
+      return child.widget->measure(constraints);
+    }
+    return Size{0, 0};
+  }
+
+  virtual void setRectForChild() {}
 
   void render(RenderContext& renderContext) override {
-    if (!child)
-      return;
-    child->render(renderContext);
+    if (!child.widget) return;
+    renderContext.setRect(child.rect);
+    child.widget->render(renderContext);
   }
 
-void layout() override {
-    if (!child) return;
-
-    SizeConstraints constraints = buildConstraints();
-
-    Size size = child->measure(constraints);
-
-    Rect rect = computeRect(size);
-
-    child->setRect(rect);
-
-    child->layout();
-}
-
+  void layout() override {
+    if (!child.widget) return;
+    setRectForChild();
+    child.widget->layout();
+  }
 };

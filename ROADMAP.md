@@ -91,14 +91,15 @@ Make layouts more flexible and expressive.
 * [x] Flex ratios (`LayoutProperties::flex`)
 * [x] Fill / expand (flex < 0 in `Flex` container)
 * [ ] Percentage sizing
+* [ ] Content based
 * [x] Child alignment (via per-child margin)
 
 ### Containers
 
-* [x] Row container (`Row`)
-* [x] Column container (`Column`)
-* [x] Grid container (`Grid`)
-* [x] Stack container (`Stack`)
+* [ ] Row container (`Row`)
+* [ ] Column container (`Column`)
+* [ ] Grid container (`Grid`)
+* [ ] Stack container (`Stack`)
 * [ ] Flex container (`Flex`) 
 * [ ] Scroll container (`Scroll` stub exists; logic not implemented)
 * [ ] Overlay container
