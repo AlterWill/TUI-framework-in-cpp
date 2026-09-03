@@ -10,20 +10,21 @@ enum class FlexDirection { Row, Column };
 // flex 0 means dont include that or no need to render the widget
 // percentage - just handle flex if the sum is 100 but not sure about this
 //            - it might be better to just have a different variable for this??
-//            - I think we should try with new variable 
+//            - I think we should try with new variable
 // fill - not sure how to manage this when the class is supposed to use all the space but
-//      - if there is space left, then it would be a good idea to add 
+//      - if there is space left, then it would be a good idea to add
 //      - there is also alginment, gap, spacing to consider
 //      - for flex < 0, we can use that as fill
 // with flex, we get fill, percentage, ratios
 // with min and max, we get fixed size as well
 
 class Flex : public MultiChildWidget {
-public:
+ public:
   FlexDirection flexdirection;
 
   Flex(FlexDirection dir = FlexDirection::Row) : flexdirection(dir) {}
 
+  /*
   Size measure(const SizeConstraints& constraints) override {
     if (children.empty()) {
       return Size{0, 0};
@@ -151,4 +152,35 @@ public:
       }
     }
   }
+  */
+
+  Size measure(const SizeConstraints& constraints) override {
+    Size result{0, 0};
+    Point writer{padding.getLeft(), padding.getTop()};
+
+    if (children.empty()) return result;
+
+    std::size_t extraWidth{padding.getLeft() + padding.getRight()};
+    std::size_t extraHeight{padding.getTop() + padding.getBottom()};
+
+    if (flexdirection == FlexDirection::Row) {
+      extraWidth += ((children.size() - 1) * gap);
+    } else if (flexdirection == FlexDirection::Column) {
+      extraHeight += ((children.size() - 1) * gap);
+    }
+
+    if (constraints.getMaxHeight() < extraHeight || constraints.getMaxWidth() < extraWidth) return result;
+
+    std::size_t totalFlex{};
+    if (flexdirection == FlexDirection::Column) {
+      for (const auto& child : children) {
+        
+      }
+    } else if (flexdirection == FlexDirection::Row) {
+    }
+
+    return result;
+  }
+
+  void setRectForChildren() override {}
 };

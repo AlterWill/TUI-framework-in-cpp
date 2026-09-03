@@ -3,15 +3,15 @@
 #include <cstddef>
 #include <vector>
 
-#include "layout/SizeConstraints.hpp"
 #include "input/event.hpp"
-#include "utilities/insets.hpp"
+#include "layout/SizeConstraints.hpp"
 #include "rendering/renderContext.hpp"
+#include "utilities/insets.hpp"
 
-// A normal widget would have to just handle 
+// A normal widget would have to just handle
 // min, max, fixed size
 //
-// A parent has to handle the constraints of 
+// A parent has to handle the constraints of
 // fixed,min,max,fill, child alignment
 
 class Widget {
@@ -48,6 +48,7 @@ class Widget {
 
   virtual Size intrinsicSize() = 0;
   virtual Size measure(const SizeConstraints& constraints) = 0;
+  virtual bool renderable(Size size) const = 0;
   virtual void render(RenderContext& rendercontext) = 0;
   virtual void layout() = 0;
   virtual bool handleEvent(const Event&) { return false; }

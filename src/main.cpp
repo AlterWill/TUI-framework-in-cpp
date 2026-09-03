@@ -49,15 +49,14 @@ int main() {
   tools::invisiableCursor();
 
   AppData data{};
-  auto textParagraph = std::make_unique<Text>(data.lines, Style{.colours = {.fg = NamedColour::Aqua,.bg = NamedColour::RebeccaPurple}}, Alignment::left);
+  auto textParagraph = std::make_unique<Text>(data.lines, Style{.colours = {.fg = NamedColour::Aqua,.bg = NamedColour::RebeccaPurple}}, HorizontalAlignment::Left);
   textParagraph->setPadding(Insets{0,0,5,5});
-  textParagraph->setMargin(Insets{5,5,0,0});
 
-  auto box = std::make_unique<Box>(std::move(textParagraph),data.boxTitle,Alignment::right,false,boxStyle::heavy,ColourPair{.fg = NamedColour::Aqua,.bg = NamedColour::Grey});
+  auto box = std::make_unique<Box>(std::move(textParagraph),data.boxTitle,HorizontalAlignment::Right,false,boxStyle::heavy,ColourPair{.fg = NamedColour::Aqua,.bg = NamedColour::Grey});
   box->setPadding(Insets{0,5,0,0});
-  box->setMargin(Insets{5,5,5,0});
+  box->child.margin = Insets{5,5,0,0};
 
-  WidgetTree tree(std::move(box), terminal);
+  WidgetTree tree(std::move(box), terminal, Insets{5,5,5,0});
 
   bool running = true;
   times.push_back(timer.elapsed_ms());

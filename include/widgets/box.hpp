@@ -42,7 +42,28 @@ class Box : public SingleChildWidget {
       std::size_t b = 1)
       : SingleChildWidget(std::move(mainChild)), outline(o), borderSize(b), colours(c) {}
 
+  Box(LayoutNode mainChild,
+      boxOutlineDetails o = boxStyle::light,
+      ColourPair c = ColourPair{},
+      std::size_t b = 1)
+      : SingleChildWidget(std::move(mainChild)), outline(o), borderSize(b), colours(c) {}
+
   Box(std::unique_ptr<Widget> mainChild,
+      const std::string& t,
+      HorizontalAlignment a = HorizontalAlignment::Left,
+      bool tt = true,
+      boxOutlineDetails o = boxStyle::light,
+      ColourPair c = ColourPair{},
+      std::size_t b = 1)
+      : SingleChildWidget(std::move(mainChild)),
+        title(std::move(t)),
+        alignment(a),
+        titleTop(tt),
+        outline(o),
+        borderSize(b),
+        colours(c) {}
+
+  Box(LayoutNode mainChild,
       const std::string& t,
       HorizontalAlignment a = HorizontalAlignment::Left,
       bool tt = true,
