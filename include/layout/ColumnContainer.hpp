@@ -1,71 +1,80 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
+#include <vector>
 
 #include "core/multiChildWidget.hpp"
+#include "layout/LinearLayoutSolver.hpp"
 
-// height gets divided, not width
-class Column : public MultiChildWidget {
- public:
-  virtual bool handleEvent(const Event&) override { return false; };
+struct ColumnBase {
+  Rect rect{};
+};
+
+struct Column : public MultiChildWidget {
+  ColumnBase colBase;
+
+  Column() = default;
+
+  // Builder methods
+  Column& withGap(std::size_t g) {
+    base.gap = g;
+    return *this;
+  }
+
+  Column& withPadding(Insets p) {
+    base.widgetBase.padding = p;
+    return *this;
+  }
+
+  Column& addChild(LayoutNode node) {
+    base.children.push_back(std::move(node));
+    return *this;
+  }
+
+  Column& addChild(std::unique_ptr<Widget> w, SizeSpec hSpec = {}, SizeSpec wSpec = {}) {
+    LayoutNode node;
+    node.widget = std::move(w);
+    node.height = hSpec;
+    node.width = wSpec;
+    base.children.push_back(std::move(node));
+    return *this;
+  }
+
+  bool handleEvent(const Event&) override { return false; }
 
   Size measure(const SizeConstraints& constraints) override {
-    if (children.empty()) {
-      return Size{0, 0};
-    }
-    std::size_t height{};
-    std::size_t maxWidth{};
-    SizeConstraints childConstraints = constraints;
-
-    // Distribute max height among children
-    childConstraints.setMaxHeight(constraints.getMaxHeight() / children.size());
-
-    for (auto& child : children) {
-      Size childSize = child->measure(childConstraints);
-      height += childSize.getHeight();
-      maxWidth = std::max(maxWidth, childSize.getWidth());
-    }
-
-    height = std::clamp(height, constraints.getMinHeight(), constraints.getMaxHeight());
-    maxWidth = std::clamp(maxWidth, constraints.getMinWidth(), constraints.getMaxWidth());
-
-    return Size{height, maxWidth};
+    return LinearLayoutSolver::solveMeasure(base.children, Axis::Vertical, constraints, base.widgetBase.padding,
+                                           base.gap);
   }
 
   void setRectForChildren() override {
-    if (children.empty()) {
-      return;
-    }
+    if (base.children.empty()) return;
 
-    int usableWidth = std::max(0, static_cast<int>(rect.getWidth()) - padding.left - padding.right);
-    int usableHeight = std::max(0, static_cast<int>(rect.getHeight()) - padding.top - padding.bottom);
-    int startX = rect.getX() + padding.left;
-    int startY = rect.getY() + padding.top;
+    const auto& padding = base.widgetBase.padding;
+    std::size_t startX = colBase.rect.x + padding.left;
+    std::size_t currentY = colBase.rect.y + padding.top;
+    std::size_t usableWidth =
+        colBase.rect.width > (padding.left + padding.right) ? colBase.rect.width - padding.left - padding.right : 0;
 
-    std::size_t childrenLen = children.size();
-    int childHeight = usableHeight / childrenLen;
-    int currentY = 0;
-    for (std::size_t i = 0; i < childrenLen - 1; i++) {
-      currentY = i * childHeight;
-      // clang-format off
-      children[i]->setRect(
-        startX + children[i]->margin.left,
-        startY + currentY + children[i]->margin.top,
-        std::max(0, childHeight - children[i]->margin.top - children[i]->margin.bottom),
-        std::max(0, usableWidth - children[i]->margin.left - children[i]->margin.right)
-      );
-      // clang-format on
+    for (auto& child : base.children) {
+      std::size_t childW = child.measured.width;
+      std::size_t childH = child.measured.height;
+
+      // Horizontal alignment in column width
+      std::size_t childX = startX + child.margin.left;
+      std::size_t totalChildW = childW + child.margin.left + child.margin.right;
+      if (usableWidth > totalChildW) {
+        std::size_t extraHSpace = usableWidth - totalChildW;
+        if (child.horizontalAlignment == HorizontalAlignment::Center) {
+          childX += extraHSpace / 2;
+        } else if (child.horizontalAlignment == HorizontalAlignment::Right) {
+          childX += extraHSpace;
+        }
+      }
+
+      child.rect = Rect{childX, currentY + child.margin.top, childH, childW};
+      currentY += childH + child.margin.top + child.margin.bottom + base.gap;
     }
-    currentY = (childrenLen - 1) * childHeight;
-    // clang-format off
-    children[childrenLen - 1]->setRect(
-      startX + children[childrenLen - 1]->margin.left,
-      startY + children[childrenLen - 1]->margin.top + currentY,
-      std::max(0, usableHeight - currentY - children[childrenLen - 1]->margin.top - children[childrenLen - 1]->margin.bottom),
-      std::max(0, usableWidth - children[childrenLen - 1]->margin.left - children[childrenLen - 1]->margin.right)
-    );
-    // clang-format on
   }
-
-
 };

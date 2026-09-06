@@ -1,21 +1,27 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 
 enum class SizeType {
   Content,
   Fixed,
   Percentage,
   Flex,
-  AspectRatio
 };
 
 struct SizeSpec {
   SizeType type{SizeType::Content};
   std::size_t value{};
+
+  std::optional<float> aspectRatio;
+
 };
 
 /*
+
+watch video on clay algorithm?
+
 SIZE TYPES
 ==========
 
@@ -73,15 +79,17 @@ Example:
 LAYOUT ORDER
 ============
 
-1. Allocate Fixed children.
-2. Allocate Percentage children.
-3. Measure and allocate Content children.
-4. Resolve aspect-ratio dimensions.
-5. Calculate remaining space.
-6. Distribute remaining space among Flex children.
-7. Distribute any unused space according to container
-   justification/alignment.
-8. Produce child Rects.
+1. Fixed
+2. Percentage
+3. Measure ALL Content children
+4. Sum Content preferred sizes
+5. If they fit:
+       allocate preferred sizes
+   Else:
+       shrink Content children toward their minimums
+6. Calculate remaining space
+7. Give remaining space to Flex
+8. Apply justification/alignment
 
 
 OVERFLOW
@@ -119,4 +127,13 @@ Examples:
     SpaceEvenly
 
 This is separate from SizeSpec.
+
+
+Measure
+=================
+
+- Fixed gets that value 
+- percentage gets the percentage of remaining constraints after fixed
+- Content gets there preferred size with the remaining constraints
+- Flex just gets the remaining constraints
 */
