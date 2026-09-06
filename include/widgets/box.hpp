@@ -1,9 +1,10 @@
 #pragma once
 
 #include <algorithm>
+#include <string>
 
-#include "utilities/alignment.hpp"
 #include "core/singleChildWidget.hpp"
+#include "utilities/alignment.hpp"
 
 struct boxOutlineDetails {
   char32_t horizontal;
@@ -16,89 +17,74 @@ struct boxOutlineDetails {
 
 // clang-format off
 namespace boxStyle {
-//            horizontal; vertical; topLeft; topRight; bottomLeft; bottomRight;
-inline constexpr boxOutlineDetails light = {U'─', U'│', U'┌', U'┐', U'└', U'┘'};
-inline constexpr boxOutlineDetails heavy = {U'━', U'┃', U'┏', U'┓', U'┗', U'┛'};
+inline constexpr boxOutlineDetails light        = {U'─', U'│', U'┌', U'┐', U'└', U'┘'};
+inline constexpr boxOutlineDetails heavy        = {U'━', U'┃', U'┏', U'┓', U'┗', U'┛'};
 inline constexpr boxOutlineDetails doubleBorder = {U'═', U'║', U'╔', U'╗', U'╚', U'╝'};
-inline constexpr boxOutlineDetails rounded = {U'─', U'│', U'╭', U'╮', U'╰', U'╯'};
-inline constexpr boxOutlineDetails dashed = {U'╌', U'╎', U'┌', U'┐', U'└', U'┘'};
-inline constexpr boxOutlineDetails block = {U'█', U'█', U'█', U'█', U'█', U'█'};
-inline constexpr boxOutlineDetails ascii = {U'-', U'|', U'+', U'+', U'+', U'+'};
+inline constexpr boxOutlineDetails rounded      = {U'─', U'│', U'╭', U'╮', U'╰', U'╯'};
+inline constexpr boxOutlineDetails dashed       = {U'╌', U'╎', U'┌', U'┐', U'└', U'┘'};
+inline constexpr boxOutlineDetails block        = {U'█', U'█', U'█', U'█', U'█', U'█'};
+inline constexpr boxOutlineDetails ascii        = {U'-', U'|', U'+', U'+', U'+', U'+'};
 }
 // clang-format on
 
-class Box : public SingleChildWidget {
- public:
+struct BoxBase {
   std::string title;
-  HorizontalAlignment alignment;
+  HorizontalAlignment alignment{HorizontalAlignment::Left};
   bool titleTop{true};
-  boxOutlineDetails outline;
+  boxOutlineDetails outline{boxStyle::light};
   std::size_t borderSize{1};
   ColourPair colours;
+};
 
-  Box(std::unique_ptr<Widget> mainChild,
-      boxOutlineDetails o = boxStyle::light,
-      ColourPair c = ColourPair{},
-      std::size_t b = 1)
-      : SingleChildWidget(std::move(mainChild)), outline(o), borderSize(b), colours(c) {}
+struct Box : public SingleChildWidget {
+  BoxBase boxBase;
 
-  Box(LayoutNode mainChild,
-      boxOutlineDetails o = boxStyle::light,
-      ColourPair c = ColourPair{},
-      std::size_t b = 1)
-      : SingleChildWidget(std::move(mainChild)), outline(o), borderSize(b), colours(c) {}
+  Box() = default;
+  explicit Box(std::unique_ptr<Widget> childWidget) : SingleChildWidget(std::move(childWidget)) {}
+  explicit Box(LayoutNode childNode) : SingleChildWidget(std::move(childNode)) {}
 
-  Box(std::unique_ptr<Widget> mainChild,
-      const std::string& t,
-      HorizontalAlignment a = HorizontalAlignment::Left,
-      bool tt = true,
-      boxOutlineDetails o = boxStyle::light,
-      ColourPair c = ColourPair{},
-      std::size_t b = 1)
-      : SingleChildWidget(std::move(mainChild)),
-        title(std::move(t)),
-        alignment(a),
-        titleTop(tt),
-        outline(o),
-        borderSize(b),
-        colours(c) {}
+  // Builder methods
+  Box& withTitle(std::string t, HorizontalAlignment a = HorizontalAlignment::Left, bool top = true) {
+    boxBase.title = std::move(t);
+    boxBase.alignment = a;
+    boxBase.titleTop = top;
+    return *this;
+  }
 
-  Box(LayoutNode mainChild,
-      const std::string& t,
-      HorizontalAlignment a = HorizontalAlignment::Left,
-      bool tt = true,
-      boxOutlineDetails o = boxStyle::light,
-      ColourPair c = ColourPair{},
-      std::size_t b = 1)
-      : SingleChildWidget(std::move(mainChild)),
-        title(std::move(t)),
-        alignment(a),
-        titleTop(tt),
-        outline(o),
-        borderSize(b),
-        colours(c) {}
+  Box& withOutline(boxOutlineDetails o) {
+    boxBase.outline = o;
+    return *this;
+  }
 
-  Size intrinsicSize() override {
-    if (!child.widget) return Size{0, 0};
-    Size result{child.widget->intrinsicSize()};
-    result.setHeight(
-        result.getHeight() + padding.getTop() + padding.getBottom() + child.margin.getTop() +
-        child.margin.getBottom() + (2 * borderSize)
-    );
-    result.setWidth(
-        result.getWidth() + padding.getLeft() + padding.getRight() + child.margin.getLeft() +
-        child.margin.getRight() + (2 * borderSize)
-    );
-    return result;
+  Box& withColours(ColourPair c) {
+    boxBase.colours = c;
+    return *this;
+  }
+
+  Box& withBorderSize(std::size_t b) {
+    boxBase.borderSize = b;
+    return *this;
+  }
+
+  Box& withPadding(Insets p) {
+    base.widgetBase.padding = p;
+    return *this;
+  }
+
+  Box& withChildMargin(Insets m) {
+    base.child.margin = m;
+    return *this;
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    std::size_t extraWidth = (2 * borderSize) + padding.getLeft() + padding.getRight() +
-                             (child.widget ? (child.margin.getLeft() + child.margin.getRight()) : 0);
-    std::size_t extraHeight = (2 * borderSize) + padding.getTop() + padding.getBottom() +
-                              (child.widget ? (child.margin.getTop() + child.margin.getBottom()) : 0);
+    const auto& padding = base.widgetBase.padding;
+    const auto& child = base.child;
 
-    // If the constraints cannot even accommodate borders & padding/margins, cannot display.
+    std::size_t extraWidth = (2 * boxBase.borderSize) + padding.left + padding.right +
+                             (child.widget ? (child.margin.left + child.margin.right) : 0);
+    std::size_t extraHeight = (2 * boxBase.borderSize) + padding.top + padding.bottom +
+                              (child.widget ? (child.margin.top + child.margin.bottom) : 0);
+
     if (constraints.getMaxWidth() < extraWidth || constraints.getMaxHeight() < extraHeight) {
       return Size{0, 0};
     }
@@ -118,12 +104,12 @@ class Box : public SingleChildWidget {
       childConstraints.setMaxWidth(constraints.getMaxWidth() - extraWidth);
 
       Size childSize = child.widget->measure(childConstraints);
-      if (childSize.getWidth() == 0 || childSize.getHeight() == 0) {
+      if (childSize.width == 0 || childSize.height == 0) {
         return Size{0, 0};
       }
 
-      contentWidth = childSize.getWidth();
-      contentHeight = childSize.getHeight();
+      contentWidth = childSize.width;
+      contentHeight = childSize.height;
     }
 
     std::size_t totalWidth =
@@ -136,11 +122,13 @@ class Box : public SingleChildWidget {
 
   void drawBorder(RenderContext& rendercontext) {
     const Rect& rect = rendercontext.getRect();
+    const auto& padding = base.widgetBase.padding;
+    const auto& child = base.child;
 
-    std::size_t extraW = (2 * borderSize) + padding.getLeft() + padding.getRight() +
-                         (child.widget ? (child.margin.getLeft() + child.margin.getRight()) : 0);
-    std::size_t extraH = (2 * borderSize) + padding.getTop() + padding.getBottom() +
-                         (child.widget ? (child.margin.getTop() + child.margin.getBottom()) : 0);
+    std::size_t extraW = (2 * boxBase.borderSize) + padding.left + padding.right +
+                         (child.widget ? (child.margin.left + child.margin.right) : 0);
+    std::size_t extraH = (2 * boxBase.borderSize) + padding.top + padding.bottom +
+                         (child.widget ? (child.margin.top + child.margin.bottom) : 0);
 
     if (rect.width < extraW || rect.height < extraH) {
       return;
@@ -148,83 +136,85 @@ class Box : public SingleChildWidget {
 
     std::size_t left = rect.x;
     std::size_t top = rect.y;
-    std::size_t right = rect.x + rect.width - borderSize;
-    std::size_t bottom = rect.y + rect.height - borderSize;
+    std::size_t right = rect.x + rect.width - boxBase.borderSize;
+    std::size_t bottom = rect.y + rect.height - boxBase.borderSize;
 
     Cell borderCell;
-    borderCell.setColour(colours);
+    borderCell.setColour(boxBase.colours);
 
-    borderCell.setGlyph(outline.topLeft);
+    borderCell.setGlyph(boxBase.outline.topLeft);
     rendercontext.setCell(left, top, borderCell);
 
-    borderCell.setGlyph(outline.topRight);
+    borderCell.setGlyph(boxBase.outline.topRight);
     rendercontext.setCell(right, top, borderCell);
 
-    borderCell.setGlyph(outline.bottomLeft);
+    borderCell.setGlyph(boxBase.outline.bottomLeft);
     rendercontext.setCell(left, bottom, borderCell);
 
-    borderCell.setGlyph(outline.bottomRight);
+    borderCell.setGlyph(boxBase.outline.bottomRight);
     rendercontext.setCell(right, bottom, borderCell);
 
-    borderCell.setGlyph(outline.horizontal);
+    borderCell.setGlyph(boxBase.outline.horizontal);
     for (std::size_t x = left + 1; x < right; x++) {
       rendercontext.setCell(x, top, borderCell);
       rendercontext.setCell(x, bottom, borderCell);
     }
 
-    if (title.size() <= rect.width) {
+    if (boxBase.title.size() <= rect.width) {
       std::size_t remainingSpace =
-          std::max(static_cast<std::size_t>(0), rect.getWidth() - (2 * borderSize) - title.size());
+          (rect.width > (2 * boxBase.borderSize) + boxBase.title.size())
+              ? (rect.width - (2 * boxBase.borderSize) - boxBase.title.size())
+              : 0;
       std::size_t startingX = left + 1;
       std::size_t startingY = top;
 
-      if (alignment == HorizontalAlignment::Center) {
+      if (boxBase.alignment == HorizontalAlignment::Center) {
         startingX += remainingSpace / 2;
-      } else if (alignment == HorizontalAlignment::Right) {
+      } else if (boxBase.alignment == HorizontalAlignment::Right) {
         startingX += remainingSpace;
       }
-      if (!titleTop) {
+      if (!boxBase.titleTop) {
         startingY = bottom;
       }
 
-      for (std::size_t x = startingX; x < startingX + title.size() && x < right; x++) {
-        rendercontext.setGlyph(x, startingY, static_cast<char32_t>(title[x - startingX]));
+      for (std::size_t x = startingX; x < startingX + boxBase.title.size() && x < right; x++) {
+        rendercontext.setGlyph(x, startingY, static_cast<char32_t>(boxBase.title[x - startingX]));
       }
     }
-    borderCell.setGlyph(outline.vertical);
+    borderCell.setGlyph(boxBase.outline.vertical);
     for (std::size_t y = top + 1; y < bottom; y++) {
       rendercontext.setCell(left, y, borderCell);
       rendercontext.setCell(right, y, borderCell);
     }
 
-    // not sure if box should do set the style for it children or not
     Cell bgCell;
-    bgCell.setBackgroundColour(colours.getBackgroundColour());
-    for (std::size_t x = left + borderSize; x < right; x++) {
-      for (std::size_t y = top + borderSize; y < bottom; y++) {
+    bgCell.setBackgroundColour(boxBase.colours.getBackgroundColour());
+    for (std::size_t x = left + boxBase.borderSize; x < right; x++) {
+      for (std::size_t y = top + boxBase.borderSize; y < bottom; y++) {
         rendercontext.setStyle(x, y, bgCell.getStyle());
       }
     }
   }
 
+  void setRectForChild() override {
+    if (!base.child.widget) return;
+
+    std::size_t extraW = (2 * boxBase.borderSize) + base.widgetBase.padding.left + base.widgetBase.padding.right +
+                         base.child.margin.left + base.child.margin.right;
+    std::size_t extraH = (2 * boxBase.borderSize) + base.widgetBase.padding.top + base.widgetBase.padding.bottom +
+                         base.child.margin.top + base.child.margin.bottom;
+
+    // Use current allocated rect
+    base.child.rect = Rect{
+        base.child.rect.x + boxBase.borderSize + base.widgetBase.padding.left + base.child.margin.left,
+        base.child.rect.y + boxBase.borderSize + base.widgetBase.padding.top + base.child.margin.top,
+        (base.child.rect.height > extraH) ? (base.child.rect.height - extraH) : 0,
+        (base.child.rect.width > extraW) ? (base.child.rect.width - extraW) : 0
+    };
+  }
+
   void render(RenderContext& rendercontext) override {
     drawBorder(rendercontext);
-    if (!child.widget) return;
-
-    const Rect& rect = rendercontext.getRect();
-    std::size_t extraW =
-        (2 * borderSize) + padding.getLeft() + padding.getRight() + child.margin.getLeft() + child.margin.getRight();
-    std::size_t extraH =
-        (2 * borderSize) + padding.getTop() + padding.getBottom() + child.margin.getTop() + child.margin.getBottom();
-
-    child.rect = Rect{
-        rect.x + borderSize + padding.getLeft() + child.margin.getLeft(),
-        rect.y + borderSize + padding.getTop() + child.margin.getTop(),
-        (rect.height > extraH) ? (rect.height - extraH) : 0,
-        (rect.width > extraW) ? (rect.width - extraW) : 0
-    };
-
-    rendercontext.setRect(child.rect);
-    child.widget->render(rendercontext);
+    SingleChildWidget::render(rendercontext);
   }
 };

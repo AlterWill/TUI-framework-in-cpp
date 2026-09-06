@@ -19,6 +19,10 @@ cd TUI
 # Clean any existing build artifacts
 rm -rf build
 
+# for debugger
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j && ./build/tui
+
 # Configure using CMake with the Ninja generator
 cmake -G Ninja -B build
 

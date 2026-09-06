@@ -9,6 +9,7 @@
 #include "widgets/text.hpp"
 #include "terminal/tools.hpp"
 #include "core/widgetTree.hpp"
+#include "layout/RowContainer.hpp"
 
 struct AppData {
   std::vector<std::u32string> lines{U"HHelloHelloHelloHelloHelloHelloHelloHelloHelloello"};
@@ -48,22 +49,42 @@ int main() {
   tools::clearScreen();
   tools::invisiableCursor();
 
-  AppData data{};
-  auto textParagraph = std::make_unique<Text>(data.lines, Style{.colours = {.fg = NamedColour::Aqua,.bg = NamedColour::RebeccaPurple}}, HorizontalAlignment::Left);
-  textParagraph->setPadding(Insets{0,0,5,5});
+  // ─── Row Layout Test ───────────────────────────────────────────
+  // Child 1: Fixed width=20, label "FIXED"
+  std::vector<std::u32string> fixedLines{U"[ FIXED w=20 ]"};
+  auto fixedText = std::make_unique<Text>(fixedLines);
+  fixedText->withStyle(Style{.colours = {.fg = NamedColour::Black, .bg = NamedColour::Aqua}});
 
-  auto box = std::make_unique<Box>(std::move(textParagraph),data.boxTitle,HorizontalAlignment::Right,false,boxStyle::heavy,ColourPair{.fg = NamedColour::Aqua,.bg = NamedColour::Grey});
-  box->setPadding(Insets{0,5,0,0});
-  box->child.margin = Insets{5,5,0,0};
+  // Child 2: Percentage width=25%, label "PCT 25%"
+  std::vector<std::u32string> pctLines{U"[ PCT 25% ]"};
+  auto pctText = std::make_unique<Text>(pctLines);
+  pctText->withStyle(Style{.colours = {.fg = NamedColour::Black, .bg = NamedColour::Yellow}});
 
-  WidgetTree tree(std::move(box), terminal, Insets{5,5,5,0});
+  // Child 3: Content (natural text width), label "CONTENT"
+  std::vector<std::u32string> contentLines{U"[ CONTENT ]"};
+  auto contentText = std::make_unique<Text>(contentLines);
+  contentText->withStyle(Style{.colours = {.fg = NamedColour::Black, .bg = NamedColour::Green}});
+
+  // Child 4: Flex=1 (takes remaining space), label "FLEX fills rest"
+  std::vector<std::u32string> flexLines{U"[ FLEX: fills remaining space ]"};
+  auto flexText = std::make_unique<Text>(flexLines);
+  flexText->withStyle(Style{.colours = {.fg = NamedColour::Black, .bg = NamedColour::RebeccaPurple}});
+
+  auto row = std::make_unique<Row>();
+  row->withGap(1)
+     .withPadding(Insets{1, 1, 1, 1})
+     .addChild(std::move(fixedText),   SizeSpec{SizeType::Fixed,      20, {}}, SizeSpec{})
+     .addChild(std::move(pctText),     SizeSpec{SizeType::Percentage, 25, {}}, SizeSpec{})
+     .addChild(std::move(contentText), SizeSpec{},                             SizeSpec{})
+     .addChild(std::move(flexText),    SizeSpec{SizeType::Flex,        1, {}}, SizeSpec{});
+
+  WidgetTree tree(std::move(row), terminal);
 
   bool running = true;
   times.push_back(timer.elapsed_ms());
   while (running) {
     times.push_back(timer.elapsed_ms());
 
-    data.lines.push_back(U"HHelloHelloHelloHelloHelloHelloHelloHelloHelloello");
     tools::cursorHomePosition();
     times.push_back(timer.elapsed_ms());
 
