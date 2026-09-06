@@ -1,79 +1,35 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "core/layoutNode.hpp"
-#include "rendering/renderContext.hpp"
 #include "core/widget.hpp"
 
-class SingleChildWidget : public Widget {
- public:
+struct SingleChildWidgetBase {
+  WidgetBase widgetBase;
   LayoutNode child;
+};
+
+struct SingleChildWidget : public Widget {
+  SingleChildWidgetBase base;
 
   SingleChildWidget() = default;
-
   explicit SingleChildWidget(std::unique_ptr<Widget> c) {
-    child.widget = std::move(c);
-    if (child.widget) {
-      child.widget->parent = this;
-    }
+    base.child.widget = std::move(c);
   }
-
-  explicit SingleChildWidget(LayoutNode c) : child(std::move(c)) {
-    if (child.widget) {
-      child.widget->parent = this;
-    }
-  }
-
-  std::size_t childrenSize() { return child.widget ? 1 : 0; }
-
-  std::vector<Widget*> getChildren() override {
-    if (child.widget) return {child.widget.get()};
-    return {};
-  }
-
-  void setChild(std::unique_ptr<Widget> c) {
-    child.widget = std::move(c);
-    if (child.widget) {
-      child.widget->parent = this;
-    }
-  }
-
-  void setChild(LayoutNode c) {
-    child = std::move(c);
-    if (child.widget) {
-      child.widget->parent = this;
-    }
-  }
-
-  void removeChild() { child.widget = nullptr; }
-
-  Size intrinsicSize() override {
-    if (child.widget) {
-      return child.widget->intrinsicSize();
-    }
-    return Size{0, 0};
-  }
-
-  Size measure(const SizeConstraints& constraints) override {
-    if (child.widget) {
-      return child.widget->measure(constraints);
-    }
-    return Size{0, 0};
-  }
+  explicit SingleChildWidget(LayoutNode c) : base{.widgetBase = {}, .child = std::move(c)} {}
 
   virtual void setRectForChild() {}
 
-  void render(RenderContext& renderContext) override {
-    if (!child.widget) return;
-    renderContext.setRect(child.rect);
-    child.widget->render(renderContext);
+  void layout() override {
+    setRectForChild();
+    if (base.child.widget) {
+      base.child.widget->layout();
+    }
   }
 
-  void layout() override {
-    if (!child.widget) return;
-    setRectForChild();
-    child.widget->layout();
+  void render(RenderContext& rendercontext) override {
+    if (base.child.widget) {
+      rendercontext.setRect(base.child.rect);
+      base.child.widget->render(rendercontext);
+    }
   }
 };

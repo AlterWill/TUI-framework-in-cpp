@@ -8,7 +8,7 @@
 #include "core/widget.hpp"
 
 struct LayoutNode {
-  bool dirty{false};
+  bool dirty{true};
 
   std::unique_ptr<Widget> widget;
 

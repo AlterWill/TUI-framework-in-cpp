@@ -51,25 +51,24 @@ class WidgetTree {
 
   void layout(const Rect& r) {
     if (!root.widget) return;
-    if (r.height < root.margin.getTop() + root.margin.getBottom() ||
-        r.width < root.margin.getLeft() + root.margin.getRight())
+    if (r.height < root.margin.top + root.margin.bottom ||
+        r.width < root.margin.left + root.margin.right)
       return;
-    std::size_t rootHeight = r.height - root.margin.getTop() - root.margin.getBottom();
-    std::size_t rootWidth = r.width - root.margin.getLeft() - root.margin.getRight();
-    // clang-format off
-    Size prefrededSize = root.widget->measure(
+    std::size_t rootHeight = r.height - root.margin.top - root.margin.bottom;
+    std::size_t rootWidth = r.width - root.margin.left - root.margin.right;
+    
+    Size preferredSize = root.widget->measure(
       SizeConstraints{
-        Size{0,0},
-        Size{rootHeight,rootWidth}
+        Size{0, 0},
+        Size{rootHeight, rootWidth}
       }
     );
     root.rect = Rect{
-      r.x + root.margin.getLeft(),
-      r.y + root.margin.getTop(),
-      prefrededSize.getHeight(),
-      prefrededSize.getWidth()
+      r.x + root.margin.left,
+      r.y + root.margin.top,
+      preferredSize.height,
+      preferredSize.width
     };
-    // clang-format on
     root.widget->layout();
   }
 };
