@@ -1,140 +1,190 @@
 #pragma once
 
 #include <algorithm>
-#include <stdexcept>
+#include <array>
+#include <cstddef>
+#include <memory>
+#include <vector>
+
 #include "core/multiChildWidget.hpp"
 
-class Grid : public MultiChildWidget {
- public:
-  std::size_t rows = 1;
-  std::size_t columns = 1;
+struct GridBase {
+  Rect rect{};
+};
 
-  Grid(std::size_t row, std::size_t col) : rows(row), columns(col) {}
+template <std::size_t Rows, std::size_t Cols>
+struct Grid : public MultiChildWidget {
+  static_assert(Rows > 0 && Cols > 0, "Grid must have at least 1 row and 1 column");
 
-  virtual bool handleEvent(const Event&) override { return false; };
+  GridBase gridBase;
+  std::size_t rowGap{};
+  std::size_t colGap{};
+  std::array<LayoutNode, Rows * Cols> cells{};
 
-  void setRowCol(std::size_t row, std::size_t col) {
-    rows = row;
-    columns = col;
+  Grid() {
+    base.children.resize(Rows * Cols);
   }
 
+  // Builder methods
+  Grid& withRowGap(std::size_t rg) {
+    rowGap = rg;
+    return *this;
+  }
+
+  Grid& withColGap(std::size_t cg) {
+    colGap = cg;
+    return *this;
+  }
+
+  Grid& withGaps(std::size_t rg, std::size_t cg) {
+    rowGap = rg;
+    colGap = cg;
+    return *this;
+  }
+
+  Grid& withPadding(Insets p) {
+    base.widgetBase.padding = p;
+    return *this;
+  }
+
+  Grid& setCell(std::size_t r, std::size_t c, LayoutNode node) {
+    if (r < Rows && c < Cols) {
+      std::size_t idx = r * Cols + c;
+      cells[idx] = std::move(node);
+      syncChildren();
+    }
+    return *this;
+  }
+
+  Grid& setCell(std::size_t r, std::size_t c, std::unique_ptr<Widget> w,
+                HorizontalAlignment hAlign = HorizontalAlignment::Left,
+                VerticalAlignment vAlign = VerticalAlignment::Top) {
+    if (r < Rows && c < Cols) {
+      std::size_t idx = r * Cols + c;
+      cells[idx].widget = std::move(w);
+      cells[idx].horizontalAlignment = hAlign;
+      cells[idx].verticalAlignment = vAlign;
+      syncChildren();
+    }
+    return *this;
+  }
+
+  void syncChildren() {
+    for (std::size_t i = 0; i < Rows * Cols; ++i) {
+      base.children[i] = std::move(cells[i]);
+    }
+  }
+
+  bool handleEvent(const Event&) override { return false; }
+
   Size measure(const SizeConstraints& constraints) override {
-    if (children.empty() || rows == 0 || columns == 0) {
-      return Size{0, 0};
-    }
+    const auto& padding = base.widgetBase.padding;
+    std::size_t padW = padding.left + padding.right;
+    std::size_t padH = padding.top + padding.bottom;
+    std::size_t totalColGaps = (Cols > 1) ? (Cols - 1) * colGap : 0;
+    std::size_t totalRowGaps = (Rows > 1) ? (Rows - 1) * rowGap : 0;
 
-    std::size_t extraWidth = padding.left + padding.right;
-    std::size_t extraHeight = padding.top + padding.bottom;
+    std::size_t usableW =
+        constraints.getMaxWidth() > (padW + totalColGaps) ? constraints.getMaxWidth() - padW - totalColGaps : 0;
+    std::size_t usableH =
+        constraints.getMaxHeight() > (padH + totalRowGaps) ? constraints.getMaxHeight() - padH - totalRowGaps : 0;
 
-    std::size_t usableMaxWidth = constraints.getMaxWidth() > extraWidth ? constraints.getMaxWidth() - extraWidth : 0;
-    std::size_t usableMaxHeight = constraints.getMaxHeight() > extraHeight ? constraints.getMaxHeight() - extraHeight : 0;
+    std::size_t cellMaxW = usableW / Cols;
+    std::size_t cellMaxH = usableH / Rows;
 
-    std::size_t baseWidth = usableMaxWidth / columns;
-    std::size_t lastColumnWidth = usableMaxWidth - (baseWidth * (columns - 1));
+    std::array<std::size_t, Cols> colWidths{};
+    std::array<std::size_t, Rows> rowHeights{};
 
-    std::size_t baseHeight = usableMaxHeight / rows;
-    std::size_t lastRowHeight = usableMaxHeight - (baseHeight * (rows - 1));
+    for (std::size_t r = 0; r < Rows; ++r) {
+      for (std::size_t c = 0; c < Cols; ++c) {
+        std::size_t idx = r * Cols + c;
+        auto& child = base.children[idx];
+        if (!child.widget) continue;
 
-    std::size_t totalWidth = 0;
-    std::size_t totalHeight = 0;
+        std::size_t margW = child.margin.left + child.margin.right;
+        std::size_t margH = child.margin.top + child.margin.bottom;
+        std::size_t cMaxW = cellMaxW > margW ? cellMaxW - margW : 0;
+        std::size_t cMaxH = cellMaxH > margH ? cellMaxH - margH : 0;
 
-    // Track the maximum size needed in each row / column
-    // Sum Column Widths
-    for (std::size_t c = 0; c < columns; c++) {
-      std::size_t maxColWidth = 0;
-      std::size_t currentMaxWidth = (c == columns - 1) ? lastColumnWidth : baseWidth;
+        if (child.dirty || child.measured.width == 0 || child.measured.height == 0) {
+          SizeConstraints sc{Size{0, 0}, Size{cMaxH, cMaxW}};
+          child.constraints = sc;
+          child.measured = child.widget->measure(sc);
+          child.dirty = false;
+        }
 
-      for (std::size_t r = 0; r < rows; r++) {
-        std::size_t idx = r * columns + c;
-        if (idx >= children.size()) break;
-
-        auto& child = children[idx];
-        std::size_t childExtraW = child->margin.left + child->margin.right;
-        std::size_t childExtraH = child->margin.top + child->margin.bottom;
-
-        std::size_t currentMaxHeight = (r == rows - 1) ? lastRowHeight : baseHeight;
-
-        SizeConstraints cellConstraints;
-        cellConstraints.setMaxWidth(currentMaxWidth > childExtraW ? currentMaxWidth - childExtraW : 0);
-        cellConstraints.setMaxHeight(currentMaxHeight > childExtraH ? currentMaxHeight - childExtraH : 0);
-
-        Size childSize = child->measure(cellConstraints);
-        maxColWidth = std::max(maxColWidth, childSize.getWidth() + childExtraW);
+        colWidths[c] = std::max(colWidths[c], child.measured.width + margW);
+        rowHeights[r] = std::max(rowHeights[r], child.measured.height + margH);
       }
-      totalWidth += maxColWidth;
     }
 
-    // Sum Row Heights
-    for (std::size_t r = 0; r < rows; r++) {
-      std::size_t maxRowHeight = 0;
-      std::size_t currentMaxHeight = (r == rows - 1) ? lastRowHeight : baseHeight;
+    std::size_t totalColsW = 0;
+    for (auto w : colWidths) totalColsW += w;
+    totalColsW += padW + totalColGaps;
 
-      for (std::size_t c = 0; c < columns; c++) {
-        std::size_t idx = r * columns + c;
-        if (idx >= children.size()) break;
+    std::size_t totalRowsH = 0;
+    for (auto h : rowHeights) totalRowsH += h;
+    totalRowsH += padH + totalRowGaps;
 
-        auto& child = children[idx];
-        std::size_t childExtraW = child->margin.left + child->margin.right;
-        std::size_t childExtraH = child->margin.top + child->margin.bottom;
+    std::size_t finalW = std::clamp(totalColsW, constraints.getMinWidth(), constraints.getMaxWidth());
+    std::size_t finalH = std::clamp(totalRowsH, constraints.getMinHeight(), constraints.getMaxHeight());
 
-        std::size_t currentMaxWidth = (c == columns - 1) ? lastColumnWidth : baseWidth;
-
-        SizeConstraints cellConstraints;
-        cellConstraints.setMaxWidth(currentMaxWidth > childExtraW ? currentMaxWidth - childExtraW : 0);
-        cellConstraints.setMaxHeight(currentMaxHeight > childExtraH ? currentMaxHeight - childExtraH : 0);
-
-        Size childSize = child->measure(cellConstraints);
-        maxRowHeight = std::max(maxRowHeight, childSize.getHeight() + childExtraH);
-      }
-      totalHeight += maxRowHeight;
-    }
-
-    totalWidth += extraWidth;
-    totalHeight += extraHeight;
-
-    // Clamp to constraints
-    totalWidth = std::clamp(totalWidth, constraints.getMinWidth(), constraints.getMaxWidth());
-    totalHeight = std::clamp(totalHeight, constraints.getMinHeight(), constraints.getMaxHeight());
-
-    return Size{totalHeight, totalWidth};
+    return Size{finalH, finalW};
   }
 
   void setRectForChildren() override {
-    if (rows <= 0 || columns <= 0) {
-      throw std::runtime_error("Invalid amount of rows and columns");
-    }
-    std::size_t childrenLen = children.size();
-    if (childrenLen == 0) {
-      return;
-    }
+    const auto& padding = base.widgetBase.padding;
+    std::size_t padW = padding.left + padding.right;
+    std::size_t padH = padding.top + padding.bottom;
+    std::size_t totalColGaps = (Cols > 1) ? (Cols - 1) * colGap : 0;
+    std::size_t totalRowGaps = (Rows > 1) ? (Rows - 1) * rowGap : 0;
 
-    int usableWidth = std::max(0, static_cast<int>(rect.width) - static_cast<int>(padding.left + padding.right));
-    int usableHeight = std::max(0, static_cast<int>(rect.height) - static_cast<int>(padding.top + padding.bottom));
-    std::size_t startX = rect.x + padding.left;
-    std::size_t startY = rect.y + padding.top;
+    std::size_t usableW =
+        gridBase.rect.width > (padW + totalColGaps) ? gridBase.rect.width - padW - totalColGaps : 0;
+    std::size_t usableH =
+        gridBase.rect.height > (padH + totalRowGaps) ? gridBase.rect.height - padH - totalRowGaps : 0;
 
-    std::size_t childWidth = usableWidth / columns;
-    std::size_t childHeight = usableHeight / rows;
+    std::size_t cellW = usableW / Cols;
+    std::size_t cellH = usableH / Rows;
 
-    for (std::size_t i = 0; i < childrenLen; i++) {
-      std::size_t r = i / columns;
-      std::size_t c = i % columns;
+    std::size_t startX = gridBase.rect.x + padding.left;
+    std::size_t startY = gridBase.rect.y + padding.top;
 
-      if (r >= rows) {
-        break;
+    for (std::size_t r = 0; r < Rows; ++r) {
+      for (std::size_t c = 0; c < Cols; ++c) {
+        std::size_t idx = r * Cols + c;
+        auto& child = base.children[idx];
+
+        std::size_t slotX = startX + c * (cellW + colGap);
+        std::size_t slotY = startY + r * (cellH + rowGap);
+
+        std::size_t childW = child.measured.width;
+        std::size_t childH = child.measured.height;
+
+        std::size_t childX = slotX + child.margin.left;
+        std::size_t totalChildW = childW + child.margin.left + child.margin.right;
+        if (cellW > totalChildW) {
+          std::size_t extraW = cellW - totalChildW;
+          if (child.horizontalAlignment == HorizontalAlignment::Center) {
+            childX += extraW / 2;
+          } else if (child.horizontalAlignment == HorizontalAlignment::Right) {
+            childX += extraW;
+          }
+        }
+
+        std::size_t childY = slotY + child.margin.top;
+        std::size_t totalChildH = childH + child.margin.top + child.margin.bottom;
+        if (cellH > totalChildH) {
+          std::size_t extraH = cellH - totalChildH;
+          if (child.verticalAlignment == VerticalAlignment::Center) {
+            childY += extraH / 2;
+          } else if (child.verticalAlignment == VerticalAlignment::Bottom) {
+            childY += extraH;
+          }
+        }
+
+        child.rect = Rect{childX, childY, childH, childW};
       }
-
-      auto& child = children[i];
-      std::size_t cellWidth = (c == columns - 1) ? (usableWidth - c * childWidth) : childWidth;
-      std::size_t cellHeight = (r == rows - 1) ? (usableHeight - r * childHeight) : childHeight;
-
-      std::size_t x = startX + c * childWidth + child->margin.left;
-      std::size_t y = startY + r * childHeight + child->margin.top;
-
-      std::size_t w = std::max(0, static_cast<int>(cellWidth) - static_cast<int>(child->margin.left + child->margin.right));
-      std::size_t h = std::max(0, static_cast<int>(cellHeight) - static_cast<int>(child->margin.top + child->margin.bottom));
-
-      child->setRect(x, y, h, w);
     }
   }
 };
