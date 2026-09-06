@@ -12,22 +12,23 @@ The project is organized into milestones and phases. Each phase builds on the pr
 
 The foundation of the framework.
 
-* [x] Widget base class
-* [x] Widget tree
-* [x] Single-child widgets
-* [x] Multi-child widgets
-* [x] Layout pass
-* [x] Render pass
+* [x] Widget base class and `WidgetBase` struct
+* [x] Widget tree (`WidgetTree`)
+* [x] Single-child widgets (`SingleChildWidget` with generic child render)
+* [x] Multi-child widgets (`MultiChildWidget` with generic child render)
+* [x] Layout pass (`measure()` $\to$ `layout()` / `setRectForChildren()`)
+* [x] Render pass (`render(RenderContext&)` delegating to child buffers)
 * [x] Framebuffer (`Surface` + `Buffer`)
-* [x] UTF-8 rendering
-* [x] Text widget (left alignment only; center/right are stubs)
-* [x] Box widget (multiple border styles, padding, background fill)
-* [x] Row layout
-* [x] Column layout
-* [x] Grid layout
+* [x] UTF-8 rendering & display width calculations
+* [x] Text widget with word wrapping and alignment (`Left`, `Center`, `Right`)
+* [x] Box widget (multiple border styles, padding, margin, title)
+* [x] Row layout (`Row` powered by `LinearLayoutSolver`)
+* [x] Column layout (`Column` powered by `LinearLayoutSolver`)
+* [x] Grid layout (`Grid<Rows, Cols>` compile-time grid)
+* [x] Stack layout (`Stack` with independent child alignment)
+* [x] Scroll layout (`Scroll` with offscreen `Buffer`, viewport blitting, and mouse wheel handling)
 * [x] Margin support
 * [x] Padding support
-* [ ] Declarative DSL (`react_dsl.hpp` is currently empty)
 
 ## Phase 2 — Rendering Engine 🚧
 
@@ -37,8 +38,8 @@ Improve how frames are produced and displayed.
 * [x] Incremental rendering (cell-diff via `incrementDisplay()`)
 * [x] Dirty cell tracking
 * [x] Double buffering (`Surface` holds `current` and `previous` buffers)
-* [ ] Clip rectangle stack in `RenderContext` (not yet implemented)
-* [ ] Off-screen rendering
+* [x] Off-screen buffer rendering and blitting (`Buffer::blitTo()`, used in `Scroll`)
+* [ ] Clip rectangle stack in `RenderContext`
 
 ### Terminal Backend
 
@@ -60,74 +61,47 @@ Everything related to user input and events.
 
 * [x] Keyboard input
 * [x] Mouse input (press, release, move, drag, scroll)
+* [x] Scroll event handling in `Scroll` container
 * [ ] Clipboard integration
-* [ ] Terminal resize events (`SIGWINCH`) — size is re-queried each frame via `resizeBuffer()`, but no event is dispatched
+* [ ] Terminal resize events (`SIGWINCH`)
 
 ### Event System
 
 * [x] Event objects (`keyEvent`, `MouseEvent` as `std::variant<keyEvent, MouseEvent>`)
 * [x] Event dispatcher (`EventDispatcher` in `eventHandler.hpp`)
-* [x] Event bubbling (dispatched up through `parent` chain)
+* [x] Event bubbling (dispatched through widget tree)
 * [ ] Event capture
 
 ### Focus System
 
 * [x] Focus traversal (`EventDispatcher::nextFocus` / `previousFocus`)
-* [x] Tab navigation (application must wire Tab key to `nextFocus`/`previousFocus`)
+* [x] Tab navigation
 * [ ] Focus scopes (restricting Tab traversal to a subtree)
 
-## Phase 4 — Layout Engine 🚧
-
-Make layouts more flexible and expressive.
+## Phase 4 — Layout Engine ✅
 
 * [x] Measure pass (`measure()` on each widget)
 * [x] Layout pass (`layout()` / `setRectForChildren()`)
 * [x] `RenderContext` passed through render pass
+* [x] Shared linear solver (`LinearLayoutSolver`)
 
-### Constraints
+### Constraints & Sizing
 
-* [x] Fixed size
+* [x] Fixed size (`SizeType::Fixed`)
 * [x] Min / max size (`SizeConstraints`)
-* [x] Flex ratios (`LayoutProperties::flex`)
-* [x] Fill / expand (flex < 0 in `Flex` container)
-* [ ] Percentage sizing
-* [ ] Content based
-* [x] Child alignment (via per-child margin)
+* [x] Percentage sizing (`SizeType::Percentage`)
+* [x] Content-based intrinsic sizing (`SizeType::Content` with Clay-style shrink)
+* [x] Flex sizing (`SizeType::Flex`)
+* [x] Child alignment (via per-child margins & horizontal/vertical alignment enums)
 
 ### Containers
 
-* [ ] Row container (`Row`)
-* [ ] Column container (`Column`)
-* [ ] Grid container (`Grid`)
-* [ ] Stack container (`Stack`)
-* [ ] Flex container (`Flex`) 
-* [ ] Scroll container (`Scroll` stub exists; logic not implemented)
-* [ ] Overlay container
+* [x] Row container (`Row`)
+* [x] Column container (`Column`)
+* [x] Grid container (`Grid<Rows, Cols>`)
+* [x] Stack container (`Stack`)
+* [x] Scroll container (`Scroll`)
 * [ ] Split pane
-
-## Phase 5 — Styling System
-
-Move from per-widget styling to reusable themes.
-
-### Styles
-
-* [x] Per-widget style (`Style` with `ColourPair` and text style flags)
-* [x] Text style flags: Bold, Dim, Italic, Underline, Blink, Reverse, Hidden, StrikeThrough
-
-### Themes
-
-* [ ] Theme manager
-* [ ] Style inheritance
-* [ ] Theme switching
-* [ ] Global theme
-
-### Widget States
-
-* [ ] Hover
-* [ ] Focused visual rendering
-* [ ] Active
-* [ ] Disabled
-* [ ] Selected
 
 ---
 
@@ -135,18 +109,14 @@ Move from per-widget styling to reusable themes.
 
 *Goal: A practical standard library of common TUI controls.*
 
-## Phase 6 — Basic Widgets
-
-Simple display widgets.
+## Phase 5 — Basic Widgets
 
 * [ ] Spacer
 * [ ] Divider
 * [ ] Progress bar
 * [ ] Spinner
 
-## Phase 7 — Interactive Widgets
-
-Widgets requiring events and focus.
+## Phase 6 — Interactive Widgets
 
 * [ ] Button
 * [ ] Checkbox
@@ -154,18 +124,14 @@ Widgets requiring events and focus.
 * [ ] Toggle switch
 * [ ] Slider
 
-## Phase 8 — Input Widgets
-
-Editable controls.
+## Phase 7 — Input Widgets
 
 * [ ] Text input
 * [ ] Password input
 * [ ] Text area
 * [ ] Number input
 
-## Phase 9 — Advanced Widgets
-
-Larger UI components.
+## Phase 8 — Advanced Widgets
 
 * [ ] List view
 * [ ] Table
@@ -175,9 +141,7 @@ Larger UI components.
 * [ ] Status bar
 * [ ] Toolbar
 
-## Phase 10 — Dialogs
-
-Transient UI components.
+## Phase 9 — Dialogs
 
 * [ ] Popup
 * [ ] Modal
@@ -189,43 +153,11 @@ Transient UI components.
 
 # Milestone 4: Polish
 
-*Goal: Performance, documentation, testing, and developer experience.*
+## Phase 10 — Performance & DX
 
-## Phase 11 — Performance
-
-Improve runtime efficiency.
-
-* [ ] Dirty widget rendering (skip layout/render for clean subtrees)
-* [ ] Layout caching
-* [ ] Render caching
-* [ ] Frame timing infrastructure
-* [ ] Memory optimizations
-
-## Phase 12 — Developer Experience
-
-Improve usability for library users and contributors.
-
-* [x] Diagnostic logger (`tui::Logger`, enabled via `-DENABLE_LOGGING` compile flag)
+* [x] Dirty widget measurement caching (`LayoutNode::dirty`)
+* [x] Diagnostic logger (`tui::Logger`, enabled via `-DENABLE_LOGGING`)
 * [ ] API documentation
-* [ ] Example gallery
-* [ ] Unit tests (layout math, UTF-8, event propagation)
-* [ ] Headless testing backend (in-memory terminal for CI/CD)
+* [ ] Unit tests
 * [ ] Benchmarks
-* [ ] CI/CD pipeline (GitHub Actions)
-* [ ] Package manager support
-
----
-
-# Milestone 5: Long-Term Goals
-
-*Goal: Future directions after the core framework is mature.*
-
-## Phase 13 — Future Vision
-
-* [ ] Image widget (ASCII / Unicode art)
-* [ ] Animation system
-* [ ] Async task integration
-* [ ] Virtualized list view
-* [ ] Markdown renderer
-* [ ] Code editor widget
-* [ ] Canvas widget
+* [ ] CI/CD pipeline

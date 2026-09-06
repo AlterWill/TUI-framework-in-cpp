@@ -42,20 +42,49 @@ Use this order of trust:
 
 ---
 
+## Architectural Guidelines & Conventions
+
+- **Data-oriented `struct`s:** Core widgets and nodes use `struct` with direct field access rather than verbose getters/setters.
+- **Widget Tree & Lifecycle:**
+  - `measure(SizeConstraints)`: Bottom-up measurement pass, returning the desired `Size`. Uses `LayoutNode::dirty` to avoid redundant child measurements.
+  - `layout()`: Top-down pass; delegates to `setRectForChild()` / `setRectForChildren()` and recursively invokes child `layout()`.
+  - `render(RenderContext)`: Base `SingleChildWidget` and `MultiChildWidget` provide generic child rendering routines. Widgets with decoration (e.g., `Box`) draw their own visuals and then delegate to base rendering.
+- **Layout Solver:** `LinearLayoutSolver` provides shared 4-step priority measurement (`Fixed` $\to$ `Percentage` $\to$ `Content` with Clay-style shrink $\to$ `Flex`) for `Row` and `Column`.
+- **Builder Pattern:** Widgets and containers provide fluent `.with*()` builder methods returning references (`*this`).
+
+---
+
 ## Repository Structure
 
 ```text
 include/
-├── core/       # Fundamental widget and tree infrastructure
-├── input/      # Events and event handling
-├── layout/     # Containers, sizing, and layout algorithms
-├── rendering/  # Buffers, cells, surfaces, and render context
-├── styling/    # Colours, colour pairs, and styles
-├── terminal/   # Backend and terminal-specific functionality
-├── utilities/  # Shared utility types and helper functionality
-└── widgets/    # Concrete user-facing widgets
+├── core/
+│   ├── layoutNode.hpp       # LayoutNode struct (bounds, constraints, specs, margins, alignments)
+│   ├── multiChildWidget.hpp # Base struct for multi-child containers with generic render
+│   ├── singleChildWidget.hpp# Base struct for single-child containers with generic render
+│   ├── widget.hpp           # Pure abstract Widget interface and WidgetBase data struct
+│   └── widgetTree.hpp       # Top-level widget tree manager and frame driver
+├── input/                   # Events (keyEvent, MouseEvent, Event variant)
+├── layout/
+│   ├── ColumnContainer.hpp  # Vertical linear layout container (Column)
+│   ├── GridContainer.hpp    # Compile-time fixed 2D grid container (Grid<Rows, Cols>)
+│   ├── LinearLayoutSolver.hpp # Shared 4-step linear layout solver engine
+│   ├── RowContainer.hpp     # Horizontal linear layout container (Row)
+│   ├── ScrollContainer.hpp  # Viewport scroll container with offscreen Buffer & blitting
+│   ├── Size.hpp             # 2D Size struct
+│   ├── SizeConstraints.hpp  # Layout constraints (minSize, maxSize)
+│   ├── StackContainer.hpp   # Overlapping layer container with per-child alignment (Stack)
+│   └── sizeType.hpp         # SizeType enum (Fixed, Percentage, Content, Flex) and SizeSpec
+├── rendering/               # Buffer, Cell, Surface, RenderContext
+├── styling/                 # Colour, ColourPair, Style, NamedColour
+├── terminal/                # Backend interface, linux_backend, terminal tools
+├── utilities/               # Point, Rect, Insets, Alignment, splitParagraphs
+└── widgets/
+    ├── box.hpp              # Bordered box container with fluent builder
+    └── text.hpp             # Multi-line wrapped text widget with fluent builder
 
 src/
-└── main.cpp    # Main executable / current usage
+└── main.cpp                 # Main executable / demonstration
 
-build/          # Generated build files; do NOT inspect or modify
+build/                       # Generated build files; do NOT inspect or modify
+```
