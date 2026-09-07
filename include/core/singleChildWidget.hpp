@@ -17,12 +17,12 @@ struct SingleChildWidget : public Widget {
   }
   explicit SingleChildWidget(LayoutNode c) : base{.widgetBase = {}, .child = std::move(c)} {}
 
-  virtual void setRectForChild() {}
+  virtual void setRectForChild(const Rect&) {}
 
-  void layout() override {
-    setRectForChild();
+  void layout(const Rect& rect) override {
+    setRectForChild(rect);
     if (base.child.widget) {
-      base.child.widget->layout();
+      base.child.widget->layout(base.child.rect);
     }
   }
 
@@ -31,5 +31,12 @@ struct SingleChildWidget : public Widget {
       rendercontext.setRect(base.child.rect);
       base.child.widget->render(rendercontext);
     }
+  }
+
+  bool handleEvent(const Event& event) override {
+    if (base.child.widget) {
+      return base.child.widget->handleEvent(event);
+    }
+    return false;
   }
 };

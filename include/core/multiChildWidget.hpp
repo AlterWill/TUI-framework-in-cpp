@@ -17,13 +17,13 @@ struct MultiChildWidget : public Widget {
 
   MultiChildWidget() = default;
 
-  virtual void setRectForChildren() {}
+  virtual void setRectForChildren(const Rect&) {}
 
-  void layout() override {
-    setRectForChildren();
+  void layout(const Rect& rect) override {
+    setRectForChildren(rect);
     for (auto& child : base.children) {
       if (child.widget) {
-        child.widget->layout();
+        child.widget->layout(child.rect);
       }
     }
   }
@@ -36,14 +36,25 @@ struct MultiChildWidget : public Widget {
       }
     }
   }
+
+  bool handleEvent(const Event& event) override {
+    if (auto mouse = std::get_if<MouseEvent>(&event)) {
+      // First try hit-testing children under the mouse cursor
+      for (auto& child : base.children) {
+        if (child.widget && child.rect.contains(mouse->x, mouse->y)) {
+          if (child.widget->handleEvent(event)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    // Fallback or non-mouse event: forward to all children until handled
+    for (auto& child : base.children) {
+      if (child.widget && child.widget->handleEvent(event)) {
+        return true;
+      }
+    }
+    return false;
+  }
 };
-
-/*
-
-1. measure(constraints):
-Calculate and return how much space this container and its children want (running the priority
-sizing pass: Fixed → Percentage → Content → Flex).
-2. setRectForChildren() (or setRectForChild()):
-Calculate and assign child.rect (position x,y and size w,h) for each child.
-
-*/

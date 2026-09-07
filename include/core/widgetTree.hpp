@@ -69,6 +69,6 @@ class WidgetTree {
       preferredSize.height,
       preferredSize.width
     };
-    root.widget->layout();
+    root.widget->layout(root.rect);
   }
 };
