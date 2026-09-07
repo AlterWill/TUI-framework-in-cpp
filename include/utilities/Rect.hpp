@@ -25,6 +25,10 @@ struct Rect {
   void setWidth(std::size_t val) { width = val; }
   void setHeight(std::size_t val) { height = val; }
 
+  bool contains(std::size_t px, std::size_t py) const {
+    return px >= x && px < (x + width) && py >= y && py < (y + height);
+  }
+
   // Composite: get/set as Point and Size
   Point getPoint() const { return Point{x, y}; }
   Size getSize() const { return Size{height, width}; }
