@@ -47,7 +47,7 @@ struct Text : public Widget {
     return *this;
   }
 
-  void layout() override {}
+  void layout(const Rect&) override {}
 
   Size measure(const SizeConstraints& constraints) override {
     const auto& padding = base.widgetBase.padding;
@@ -103,14 +103,7 @@ struct Text : public Widget {
       for (const auto& sentence : sentences) {
         if (writePoint.y >= maxY) return;
 
-        std::size_t remainingSpace = (contentWidth > sentence.size()) ? (contentWidth - sentence.size()) : 0;
-        if (HorizontalAlignment::Center == base.alignment) {
-          writePoint.x = startX + (remainingSpace / 2);
-        } else if (HorizontalAlignment::Right == base.alignment) {
-          writePoint.x = startX + remainingSpace;
-        } else {
-          writePoint.x = startX;
-        }
+        writePoint.x = startX + alignOffset(contentWidth, sentence.size(), base.alignment);
 
         for (auto ch : sentence) {
           rendercontext.setCell(writePoint, Cell{ch, base.style});

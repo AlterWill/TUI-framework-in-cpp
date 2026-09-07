@@ -161,21 +161,11 @@ struct Box : public SingleChildWidget {
     }
 
     if (boxBase.title.size() <= rect.width) {
-      std::size_t remainingSpace =
-          (rect.width > (2 * boxBase.borderSize) + boxBase.title.size())
-              ? (rect.width - (2 * boxBase.borderSize) - boxBase.title.size())
-              : 0;
-      std::size_t startingX = left + 1;
-      std::size_t startingY = top;
-
-      if (boxBase.alignment == HorizontalAlignment::Center) {
-        startingX += remainingSpace / 2;
-      } else if (boxBase.alignment == HorizontalAlignment::Right) {
-        startingX += remainingSpace;
-      }
-      if (!boxBase.titleTop) {
-        startingY = bottom;
-      }
+      std::size_t availableWidth =
+          (rect.width > 2 * boxBase.borderSize) ? (rect.width - 2 * boxBase.borderSize) : 0;
+      std::size_t startingX =
+          left + 1 + alignOffset(availableWidth, boxBase.title.size(), boxBase.alignment);
+      std::size_t startingY = boxBase.titleTop ? top : bottom;
 
       for (std::size_t x = startingX; x < startingX + boxBase.title.size() && x < right; x++) {
         rendercontext.setGlyph(x, startingY, static_cast<char32_t>(boxBase.title[x - startingX]));
@@ -196,7 +186,7 @@ struct Box : public SingleChildWidget {
     }
   }
 
-  void setRectForChild() override {
+  void setRectForChild(const Rect& rect) override {
     if (!base.child.widget) return;
 
     std::size_t extraW = (2 * boxBase.borderSize) + base.widgetBase.padding.left + base.widgetBase.padding.right +
@@ -204,12 +194,11 @@ struct Box : public SingleChildWidget {
     std::size_t extraH = (2 * boxBase.borderSize) + base.widgetBase.padding.top + base.widgetBase.padding.bottom +
                          base.child.margin.top + base.child.margin.bottom;
 
-    // Use current allocated rect
     base.child.rect = Rect{
-        base.child.rect.x + boxBase.borderSize + base.widgetBase.padding.left + base.child.margin.left,
-        base.child.rect.y + boxBase.borderSize + base.widgetBase.padding.top + base.child.margin.top,
-        (base.child.rect.height > extraH) ? (base.child.rect.height - extraH) : 0,
-        (base.child.rect.width > extraW) ? (base.child.rect.width - extraW) : 0
+        rect.x + boxBase.borderSize + base.widgetBase.padding.left + base.child.margin.left,
+        rect.y + boxBase.borderSize + base.widgetBase.padding.top + base.child.margin.top,
+        (rect.height > extraH) ? (rect.height - extraH) : 0,
+        (rect.width > extraW) ? (rect.width - extraW) : 0
     };
   }
 
