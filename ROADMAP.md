@@ -101,7 +101,8 @@ Everything related to user input and events.
 * [x] Grid container (`Grid<Rows, Cols>`)
 * [x] Stack container (`Stack`)
 * [x] Scroll container (`Scroll`)
-* [ ] Split pane
+* [x] Split pane (`SplitPane` with draggable divider)
+* [x] Overlay container (`Overlay`, Stack-based with modal layering)
 
 ---
 
@@ -111,8 +112,8 @@ Everything related to user input and events.
 
 ## Phase 5 — Basic Widgets
 
+* [x] Divider (preset glyphs via `dividerStyle` namespace)
 * [ ] Spacer
-* [ ] Divider
 * [ ] Progress bar
 * [ ] Spinner
 

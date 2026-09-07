@@ -4,7 +4,7 @@ A C++ terminal UI framework with a retained widget tree, constraint-based layout
 
 ## Overview
 
-This is a modern TUI framework for building terminal-based interfaces in C++. It provides a structured widget hierarchy, flexible layout containers (`Row`, `Column`, `Grid`, `Stack`, `Scroll`), styled text rendering, keyboard and mouse input, and an incremental rendering pipeline that only redraws cells that change between frames.
+This is a modern TUI framework for building terminal-based interfaces in C++. It provides a structured widget hierarchy, flexible layout containers (`Row`, `Column`, `Grid`, `Stack`, `Scroll`, `SplitPane`, `Overlay`), styled text rendering, keyboard and mouse input, and an incremental rendering pipeline that only redraws cells that change between frames.
 
 ## What Is Currently Implemented
 
@@ -33,6 +33,8 @@ This is a modern TUI framework for building terminal-based interfaces in C++. It
 - **`Grid<Rows, Cols>`** — compile-time 2D grid using `std::array` with row/column gaps, cell alignments, and builder methods
 - **`Stack`** — overlapping layer container with independent horizontal/vertical alignments per child
 - **`Scroll`** — viewport scroll container with virtual off-screen `Buffer` rendering, viewport blitting, and mouse wheel event handling
+- **`SplitPane`** — two-pane container with a `Horizontal`/`Vertical` orientation, a configurable split ratio (clamped by min/max), and a draggable divider bar. Divider appearance is chosen from the `dividerStyle` namespace (`light`, `heavy`, `doubleBorder`, `dashed`, `block`, `ascii`, `none`)
+- **`Overlay`** — built on `Stack`, manages a base application layer plus a Z-ordered list of popups, modals, dropdowns, and tooltips. Supports modal click-outside-to-dismiss and per-overlay dismissal callbacks
 
 ### Rendering
 
@@ -74,10 +76,12 @@ include/
 │   ├── ColumnContainer.hpp  # Vertical linear container (Column)
 │   ├── GridContainer.hpp    # Fixed-size 2D grid container (Grid<Rows, Cols>)
 │   ├── LinearLayoutSolver.hpp # Shared 4-step layout solver engine
+│   ├── Overlay.hpp          # Stack-based overlay container (Overlay)
 │   ├── RowContainer.hpp     # Horizontal linear container (Row)
 │   ├── ScrollContainer.hpp  # Scrollable viewport container (Scroll)
 │   ├── Size.hpp             # 2D Size struct
 │   ├── SizeConstraints.hpp  # Size constraints (minSize, maxSize)
+│   ├── SplitPane.hpp        # Two-pane resizable container (SplitPane)
 │   ├── StackContainer.hpp   # Overlapping stack container (Stack)
 │   └── sizeType.hpp         # SizeType (Fixed, Percentage, Content, Flex) & SizeSpec
 ├── rendering/
