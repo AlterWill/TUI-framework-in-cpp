@@ -41,37 +41,28 @@ struct Column : public MultiChildWidget {
     return *this;
   }
 
-  bool handleEvent(const Event&) override { return false; }
-
   Size measure(const SizeConstraints& constraints) override {
     return LinearLayoutSolver::solveMeasure(base.children, Axis::Vertical, constraints, base.widgetBase.padding,
                                            base.gap);
   }
 
-  void setRectForChildren() override {
+  void setRectForChildren(const Rect& rect) override {
     if (base.children.empty()) return;
 
+    colBase.rect = rect;
     const auto& padding = base.widgetBase.padding;
-    std::size_t startX = colBase.rect.x + padding.left;
-    std::size_t currentY = colBase.rect.y + padding.top;
+    std::size_t startX = rect.x + padding.left;
+    std::size_t currentY = rect.y + padding.top;
     std::size_t usableWidth =
-        colBase.rect.width > (padding.left + padding.right) ? colBase.rect.width - padding.left - padding.right : 0;
+        rect.width > (padding.left + padding.right) ? rect.width - padding.left - padding.right : 0;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;
       std::size_t childH = child.measured.height;
 
-      // Horizontal alignment in column width
-      std::size_t childX = startX + child.margin.left;
-      std::size_t totalChildW = childW + child.margin.left + child.margin.right;
-      if (usableWidth > totalChildW) {
-        std::size_t extraHSpace = usableWidth - totalChildW;
-        if (child.horizontalAlignment == HorizontalAlignment::Center) {
-          childX += extraHSpace / 2;
-        } else if (child.horizontalAlignment == HorizontalAlignment::Right) {
-          childX += extraHSpace;
-        }
-      }
+      std::size_t childX = alignCoordinate(startX, usableWidth, childW,
+                                           child.margin.left, child.margin.right,
+                                           child.horizontalAlignment);
 
       child.rect = Rect{childX, currentY + child.margin.top, childH, childW};
       currentY += childH + child.margin.top + child.margin.bottom + base.gap;

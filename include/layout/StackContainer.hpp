@@ -36,8 +36,6 @@ struct Stack : public MultiChildWidget {
     return *this;
   }
 
-  bool handleEvent(const Event&) override { return false; }
-
   Size measure(const SizeConstraints& constraints) override {
     if (base.children.empty()) {
       return Size{0, 0};
@@ -79,43 +77,30 @@ struct Stack : public MultiChildWidget {
     return Size{finalH, finalW};
   }
 
-  void setRectForChildren() override {
+  void setRectForChildren(const Rect& rect) override {
     if (base.children.empty()) return;
 
+    stackBase.rect = rect;
     const auto& padding = base.widgetBase.padding;
-    std::size_t startX = stackBase.rect.x + padding.left;
-    std::size_t startY = stackBase.rect.y + padding.top;
+    std::size_t startX = rect.x + padding.left;
+    std::size_t startY = rect.y + padding.top;
 
     std::size_t usableW =
-        stackBase.rect.width > (padding.left + padding.right) ? stackBase.rect.width - padding.left - padding.right : 0;
+        rect.width > (padding.left + padding.right) ? rect.width - padding.left - padding.right : 0;
     std::size_t usableH =
-        stackBase.rect.height > (padding.top + padding.bottom) ? stackBase.rect.height - padding.top - padding.bottom : 0;
+        rect.height > (padding.top + padding.bottom) ? rect.height - padding.top - padding.bottom : 0;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;
       std::size_t childH = child.measured.height;
 
-      std::size_t childX = startX + child.margin.left;
-      std::size_t totalChildW = childW + child.margin.left + child.margin.right;
-      if (usableW > totalChildW) {
-        std::size_t extraW = usableW - totalChildW;
-        if (child.horizontalAlignment == HorizontalAlignment::Center) {
-          childX += extraW / 2;
-        } else if (child.horizontalAlignment == HorizontalAlignment::Right) {
-          childX += extraW;
-        }
-      }
+      std::size_t childX = alignCoordinate(startX, usableW, childW,
+                                           child.margin.left, child.margin.right,
+                                           child.horizontalAlignment);
 
-      std::size_t childY = startY + child.margin.top;
-      std::size_t totalChildH = childH + child.margin.top + child.margin.bottom;
-      if (usableH > totalChildH) {
-        std::size_t extraH = usableH - totalChildH;
-        if (child.verticalAlignment == VerticalAlignment::Center) {
-          childY += extraH / 2;
-        } else if (child.verticalAlignment == VerticalAlignment::Bottom) {
-          childY += extraH;
-        }
-      }
+      std::size_t childY = alignCoordinate(startY, usableH, childH,
+                                           child.margin.top, child.margin.bottom,
+                                           child.verticalAlignment);
 
       child.rect = Rect{childX, childY, childH, childW};
     }

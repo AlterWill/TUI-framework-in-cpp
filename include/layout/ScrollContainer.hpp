@@ -85,11 +85,12 @@ struct Scroll : public SingleChildWidget {
     return Size{viewportH, viewportW};
   }
 
-  void setRectForChild() override {
+  void setRectForChild(const Rect& rect) override {
     if (!base.child.widget) return;
 
-    std::size_t contentW = std::max(base.child.measured.width, scrollBase.rect.width);
-    std::size_t contentH = std::max(base.child.measured.height, scrollBase.rect.height);
+    scrollBase.rect = rect;
+    std::size_t contentW = std::max(base.child.measured.width, rect.width);
+    std::size_t contentH = std::max(base.child.measured.height, rect.height);
 
     // Child renders relative to (0, 0) inside offscreen buffer
     base.child.rect = Rect{0, 0, contentH, contentW};

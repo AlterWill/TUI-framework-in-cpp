@@ -40,37 +40,28 @@ struct Row : public MultiChildWidget {
     return *this;
   }
 
-  bool handleEvent(const Event&) override { return false; }
-
   Size measure(const SizeConstraints& constraints) override {
     return LinearLayoutSolver::solveMeasure(base.children, Axis::Horizontal, constraints, base.widgetBase.padding,
                                            base.gap);
   }
 
-  void setRectForChildren() override {
+  void setRectForChildren(const Rect& rect) override {
     if (base.children.empty()) return;
 
+    rowBase.rect = rect;
     const auto& padding = base.widgetBase.padding;
-    std::size_t currentX = rowBase.rect.x + padding.left;
-    std::size_t startY = rowBase.rect.y + padding.top;
+    std::size_t currentX = rect.x + padding.left;
+    std::size_t startY = rect.y + padding.top;
     std::size_t usableHeight =
-        rowBase.rect.height > (padding.top + padding.bottom) ? rowBase.rect.height - padding.top - padding.bottom : 0;
+        rect.height > (padding.top + padding.bottom) ? rect.height - padding.top - padding.bottom : 0;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;
       std::size_t childH = child.measured.height;
 
-      // Vertical alignment in row height
-      std::size_t childY = startY + child.margin.top;
-      std::size_t totalChildH = childH + child.margin.top + child.margin.bottom;
-      if (usableHeight > totalChildH) {
-        std::size_t extraVSpace = usableHeight - totalChildH;
-        if (child.verticalAlignment == VerticalAlignment::Center) {
-          childY += extraVSpace / 2;
-        } else if (child.verticalAlignment == VerticalAlignment::Bottom) {
-          childY += extraVSpace;
-        }
-      }
+      std::size_t childY = alignCoordinate(startY, usableHeight, childH,
+                                           child.margin.top, child.margin.bottom,
+                                           child.verticalAlignment);
 
       child.rect = Rect{currentX + child.margin.left, childY, childH, childW};
       currentX += childW + child.margin.left + child.margin.right + base.gap;
