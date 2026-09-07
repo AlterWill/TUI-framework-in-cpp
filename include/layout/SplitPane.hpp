@@ -6,21 +6,8 @@
 #include "core/layoutNode.hpp"
 #include "core/widget.hpp"
 #include "rendering/renderContext.hpp"
-
-enum class SplitOrientation {
-  Horizontal,
-  Vertical,
-};
-
-namespace dividerStyle {
-inline constexpr char32_t light        = U'│';
-inline constexpr char32_t heavy        = U'┃';
-inline constexpr char32_t doubleBorder = U'║';
-inline constexpr char32_t dashed       = U'╎';
-inline constexpr char32_t block        = U'█';
-inline constexpr char32_t ascii        = U'|';
-inline constexpr char32_t none         = U' ';
-}
+#include "utilities/Orientation.hpp"
+#include "utilities/dividerStyle.hpp"
 
 struct SplitPane : public Widget {
   WidgetBase widgetBase;
@@ -28,10 +15,10 @@ struct SplitPane : public Widget {
   LayoutNode second;
 
   Rect dividerRect{};
-  SplitOrientation orientation{SplitOrientation::Horizontal};
+  Orientation orientation{Orientation::Horizontal};
   double splitRatio{0.5};
   std::size_t dividerThickness{1};
-  char32_t dividerGlyph{dividerStyle::light};
+  char32_t dividerGlyph{dividerStyle::horizontal::light};
   ColourPair dividerColours{};
   double minRatio{0.1};
   double maxRatio{0.9};
@@ -43,13 +30,13 @@ struct SplitPane : public Widget {
   SplitPane() = default;
 
   SplitPane(std::unique_ptr<Widget> firstChild, std::unique_ptr<Widget> secondChild,
-            SplitOrientation orient = SplitOrientation::Horizontal) {
+            Orientation orient = Orientation::Horizontal) {
     orientation = orient;
     first.widget = std::move(firstChild);
     second.widget = std::move(secondChild);
   }
 
-  SplitPane& withOrientation(SplitOrientation orient) {
+  SplitPane& withOrientation(Orientation orient) {
     orientation = orient;
     return *this;
   }
@@ -113,7 +100,7 @@ struct SplitPane : public Widget {
     std::size_t maxW = constraints.getMaxWidth() > padW ? constraints.getMaxWidth() - padW : 0;
     std::size_t maxH = constraints.getMaxHeight() > padH ? constraints.getMaxHeight() - padH : 0;
 
-    bool horizontal = (orientation == SplitOrientation::Horizontal);
+    bool horizontal = (orientation == Orientation::Horizontal);
     std::size_t dividerSpace = divSize;
 
     std::size_t childMaxW = horizontal ? (maxW > dividerSpace ? maxW - dividerSpace : 0) : maxW;
@@ -155,7 +142,7 @@ struct SplitPane : public Widget {
   void layout(const Rect& rect) override {
     const auto& padding = widgetBase.padding;
     std::size_t divSize = dividerVisible ? dividerThickness : 0;
-    bool horizontal = (orientation == SplitOrientation::Horizontal);
+    bool horizontal = (orientation == Orientation::Horizontal);
 
     std::size_t startX = rect.x + padding.left;
     std::size_t startY = rect.y + padding.top;
@@ -226,7 +213,7 @@ struct SplitPane : public Widget {
       if (mouse->action == MouseAction::Press && dividerVisible && dividerRect.contains(mouse->x, mouse->y)) {
         dragging = true;
         dragStartRatio = splitRatio;
-        dragStart = (orientation == SplitOrientation::Horizontal) ? mouse->x : mouse->y;
+        dragStart = (orientation == Orientation::Horizontal) ? mouse->x : mouse->y;
         return true;
       }
 
@@ -242,7 +229,7 @@ struct SplitPane : public Widget {
 
  private:
   void updateSplitFromDrag(std::size_t mx, std::size_t my) {
-    bool horizontal = (orientation == SplitOrientation::Horizontal);
+    bool horizontal = (orientation == Orientation::Horizontal);
     std::size_t divSize = dividerVisible ? dividerThickness : 0;
 
     if (horizontal) {
@@ -278,7 +265,7 @@ struct SplitPane : public Widget {
     divCell.setGlyph(dividerGlyph);
     divCell.setColour(dividerColours);
 
-    bool horizontal = (orientation == SplitOrientation::Horizontal);
+    bool horizontal = (orientation == Orientation::Horizontal);
     if (horizontal) {
       for (std::size_t y = r.y; y < r.y + r.height; y++) {
         for (std::size_t dx = 0; dx < r.width; dx++) {
