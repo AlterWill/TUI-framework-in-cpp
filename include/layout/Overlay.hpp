@@ -25,6 +25,16 @@ struct Overlay : public Stack {
     return *this;
   }
 
+  Overlay& withTransparent(bool t) {
+    transparent = t;
+    return *this;
+  }
+
+  Overlay& withBackgroundColour(Colour c) {
+    backgroundColour = c;
+    return *this;
+  }
+
   Overlay& setBaseLayer(std::unique_ptr<Widget> w) {
     ensureBaseLayerExists();
     base.children[0].widget = std::move(w);
@@ -138,6 +148,23 @@ struct Overlay : public Stack {
 
       child.rect = Rect{childX, childY, childH, childW};
     }
+  }
+
+  void render(RenderContext& rendercontext) override {
+    if (!transparent) {
+      const Rect& r = rendercontext.getRect();
+      Cell fill;
+      fill.glyph = U' ';
+      fill.style.colours.bg = backgroundColour;
+
+      for (std::size_t y = r.y; y < r.y + r.height; ++y) {
+        for (std::size_t x = r.x; x < r.x + r.width; ++x) {
+          rendercontext.setCell(x, y, fill);
+        }
+      }
+    }
+
+    MultiChildWidget::render(rendercontext);
   }
 
   bool handleEvent(const Event& event) override {

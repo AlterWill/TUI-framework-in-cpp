@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "core/multiChildWidget.hpp"
+#include "rendering/renderContext.hpp"
+#include "styling/style.hpp"
 
 struct StackBase {
   Rect rect{};
@@ -13,11 +15,24 @@ struct StackBase {
 struct Stack : public MultiChildWidget {
   StackBase stackBase;
 
+  bool transparent{false};
+  Colour backgroundColour;
+
   Stack() = default;
 
   // Builder methods
   Stack& withPadding(Insets p) {
     base.widgetBase.padding = p;
+    return *this;
+  }
+
+  Stack& withTransparent(bool t) {
+    transparent = t;
+    return *this;
+  }
+
+  Stack& withBackgroundColour(Colour c) {
+    backgroundColour = c;
     return *this;
   }
 
@@ -91,8 +106,8 @@ struct Stack : public MultiChildWidget {
         rect.height > (padding.top + padding.bottom) ? rect.height - padding.top - padding.bottom : 0;
 
     for (auto& child : base.children) {
-      std::size_t childW = child.measured.width;
-      std::size_t childH = child.measured.height;
+      std::size_t childW = usableW;  // stretch to fill available width
+      std::size_t childH = usableH;  // stretch to fill available height
 
       std::size_t childX = alignCoordinate(startX, usableW, childW,
                                            child.margin.left, child.margin.right,
@@ -104,5 +119,22 @@ struct Stack : public MultiChildWidget {
 
       child.rect = Rect{childX, childY, childH, childW};
     }
+  }
+
+  void render(RenderContext& rendercontext) override {
+    if (!transparent) {
+      const Rect& r = rendercontext.getRect();
+      Cell fill;
+      fill.glyph = U' ';
+      fill.style.colours.bg = backgroundColour;
+
+      for (std::size_t y = r.y; y < r.y + r.height; ++y) {
+        for (std::size_t x = r.x; x < r.x + r.width; ++x) {
+          rendercontext.setCell(x, y, fill);
+        }
+      }
+    }
+
+    MultiChildWidget::render(rendercontext);
   }
 };
