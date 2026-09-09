@@ -96,7 +96,14 @@ struct Text : public Widget {
     std::size_t contentWidth = rect.width - totalPadW;
     std::size_t startX = rect.x + padding.left;
     Point writePoint{startX, rect.y + padding.top};
-    std::size_t maxY = rect.y + rect.height - padding.bottom;
+    std::size_t maxY = writePoint.getY() + rect.height - padding.bottom;
+
+    Cell fill{U' ', base.style};
+    for (std::size_t y = writePoint.getY(); y < maxY; ++y) {
+      for (std::size_t x = startX; x < startX + rect.width - padding.right; ++x) {
+        rendercontext.setCell(x, y, fill);
+      }
+    }
 
     for (const auto& line : base.lines) {
       auto sentences = convertStringToParagraph(line, contentWidth);
