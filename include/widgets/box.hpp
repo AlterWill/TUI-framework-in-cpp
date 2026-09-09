@@ -181,7 +181,7 @@ struct Box : public SingleChildWidget {
     bgCell.setBackgroundColour(boxBase.colours.getBackgroundColour());
     for (std::size_t x = left + boxBase.borderSize; x < right; x++) {
       for (std::size_t y = top + boxBase.borderSize; y < bottom; y++) {
-        rendercontext.setStyle(x, y, bgCell.getStyle());
+        rendercontext.setCell(x, y, bgCell);
       }
     }
   }
