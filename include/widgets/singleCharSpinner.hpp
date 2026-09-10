@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "styling/style.hpp"
 #include "utilities/singleSpinnerStyle.hpp"
 #include "widgets/animatebleWidget.hpp"
 
@@ -10,14 +11,36 @@ struct singleCharSpinner : animatebleWidget {
   singleSpinnerData spinnerStyle;
   std::size_t frameIndex{};
   std::chrono::steady_clock::time_point lastUpdate{};
+  Style style{};
+  bool visible{true};
 
-  singleCharSpinner(singleSpinnerData data = singleSpinnerStyle::blocks)
+  singleCharSpinner& withVisibility(bool v) { visible = v; return *this; }
+
+  singleCharSpinner(singleSpinnerData data = singleSpinnerStyle::braille)
       : base{}, spinnerStyle(data), lastUpdate(std::chrono::steady_clock::now()) {}
+
+  singleCharSpinner& withStyle(Style s) {
+    style = std::move(s);
+    return *this;
+  }
+  singleCharSpinner& withColours(ColourPair c) {
+    style.colours = std::move(c);
+    return *this;
+  }
+  singleCharSpinner& withPadding(Insets p) {
+    base.padding = p;
+    return *this;
+  }
 
   void nextFrame(std::size_t i) override {
     if (spinnerStyle.frames.empty()) return;
 
     frameIndex = (frameIndex + i) % spinnerStyle.frames.size();
+  }
+
+  void reset() {
+    frameIndex = 0;
+    lastUpdate = std::chrono::steady_clock::now();
   }
 
   std::chrono::milliseconds animationInterval() const override { return spinnerStyle.interval; };
@@ -38,19 +61,21 @@ struct singleCharSpinner : animatebleWidget {
   }
 
   Size measure(const SizeConstraints& constraints) override {
+    if(!visible) return Size{0,0};
     std::size_t height = base.padding.getTop() + base.padding.getBottom() + 1;
     std::size_t width = base.padding.getLeft() + base.padding.getRight() + 1;
     return Size{std::clamp(height, constraints.getMinHeight(), constraints.getMaxHeight()),
-                std::clamp(width, constraints.getMinWidth(), constraints.getMaxWidth())};
+        std::clamp(width, constraints.getMinWidth(), constraints.getMaxWidth())};
   }
 
   void render(RenderContext& rendercontext) override {
+    if(!visible) return;
     if (rendercontext.getRect().getHeight() <= base.padding.getTop() + base.padding.getBottom() ||
         rendercontext.getRect().getWidth() <= base.padding.getLeft() + base.padding.getRight()) {
       return;
     }
 
-    rendercontext.setCell(base.padding.getLeft(), base.padding.getTop(), Cell{getFrame(), Style{}});
+    rendercontext.setCell(base.padding.getLeft(), base.padding.getTop(), Cell{getFrame(), style});
   };
 
   void layout(const Rect&) override {}
