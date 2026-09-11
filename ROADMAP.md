@@ -115,7 +115,7 @@ Everything related to user input and events.
 * [x] Divider (preset glyphs via `dividerStyle` namespace)
 * [x] Spacer
 * [x] Spinner
-* [ ] Progress bar
+* [x] Progress bar
 
 ## Phase 6 — Interactive Widgets
 

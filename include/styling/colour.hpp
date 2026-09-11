@@ -15,10 +15,10 @@ class Colour {
   Colour(NamedColour c) : colour(0xFF000000 | static_cast<uint32_t>(c)) {}
 
   // clang-format off
-  uint8_t getAlpha() {      return (colour >> 24) & 0xFF; }
-  uint8_t getRedValue() {   return (colour >> 16) & 0xFF; }
-  uint8_t getGreenValue() { return (colour >> 8) & 0xFF; }
-  uint8_t getBlueValue() {  return colour & 0xFF; }
+  uint8_t getAlpha() const {      return (colour >> 24) & 0xFF; }
+  uint8_t getRedValue() const {   return (colour >> 16) & 0xFF; }
+  uint8_t getGreenValue() const { return (colour >> 8) & 0xFF; }
+  uint8_t getBlueValue() const {  return colour & 0xFF; }
 
   void setAlphaValue(uint8_t a) {  colour = (colour & 0x00FFFFFF) | static_cast<uint32_t>(a) << 24; }
   void setRedValue(uint8_t r) {    colour = (colour & 0xFF00FFFF) | static_cast<uint32_t>(r) << 16; }

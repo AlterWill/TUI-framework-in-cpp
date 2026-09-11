@@ -32,7 +32,7 @@ struct singleCharSpinner : animatebleWidget {
     return *this;
   }
 
-  void nextFrame(std::size_t i) override {
+  void nextFrame(std::size_t i) {
     if (spinnerStyle.frames.empty()) return;
 
     frameIndex = (frameIndex + i) % spinnerStyle.frames.size();
@@ -43,7 +43,7 @@ struct singleCharSpinner : animatebleWidget {
     lastUpdate = std::chrono::steady_clock::now();
   }
 
-  std::chrono::milliseconds animationInterval() const override { return spinnerStyle.interval; };
+  std::chrono::milliseconds animationInterval() const { return spinnerStyle.interval; };
 
   void update(std::chrono::steady_clock::time_point now) override {
     auto elapsed = now - lastUpdate;

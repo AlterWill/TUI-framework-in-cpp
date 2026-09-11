@@ -1,3 +1,5 @@
+#pragma once
+/*
 #include <algorithm>
 
 #include "core/widget.hpp"
@@ -100,3 +102,4 @@ class EventDispatcher {
     return &node;
   }
 };
+*/

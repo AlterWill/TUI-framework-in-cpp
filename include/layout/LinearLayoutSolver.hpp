@@ -31,6 +31,14 @@ struct LinearLayoutSolver {
                                       : (node.margin.left + node.margin.right);
   }
 
+  static inline SizeType getCrossType(const LayoutNode& node, Axis axis) {
+    return (axis == Axis::Horizontal) ? node.height.type : node.width.type;
+  }
+
+  static inline std::size_t getCrossSpec(const LayoutNode& node, Axis axis) {
+    return (axis == Axis::Horizontal) ? node.height.value : node.width.value;
+  }
+
   static inline std::size_t getMainMeasured(const LayoutNode& node, Axis axis) {
     return (axis == Axis::Horizontal) ? node.measured.width : node.measured.height;
   }
@@ -208,6 +216,16 @@ struct LinearLayoutSolver {
         child.constraints = sc;
         child.measured = child.widget->measure(sc);
         child.dirty = false;
+      }
+
+      // Enforce explicit cross-axis SizeSpec (Fixed / Percentage) when provided
+      SizeType crossType = getCrossType(child, axis);
+      if (crossType == SizeType::Fixed) {
+        setCrossMeasured(child, axis, getCrossSpec(child, axis));
+      } else if (crossType == SizeType::Percentage) {
+        double pct = std::clamp(static_cast<double>(getCrossSpec(child, axis)), 0.0, 100.0);
+        std::size_t pctVal = static_cast<std::size_t>(static_cast<double>(usableCrossMax) * pct / 100.0);
+        setCrossMeasured(child, axis, pctVal);
       }
 
       std::size_t childCross = (axis == Axis::Horizontal) ? child.measured.height : child.measured.width;

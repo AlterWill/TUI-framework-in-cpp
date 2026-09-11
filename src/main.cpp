@@ -16,6 +16,7 @@
 #include "widgets/box.hpp"
 #include "widgets/singleCharSpinner.hpp"
 #include "widgets/text.hpp"
+#include "widgets/progressBar.hpp"
 
 // ──────────────────────────────────────────────────────────────────────────────
 // App state: owns all string data persistent for the lifetime of UI
@@ -46,6 +47,8 @@ struct AppState {
   std::vector<std::u32string> scrollLines;
   std::vector<std::u32string> footerLines{U"Press 'q' to quit | Scroll: mouse wheel | Drag divider to resize"};
 
+  float progress = 0;
+
   AppState() {
     for (unsigned int i = 1; i <= 4000; ++i) {
       scrollLines.push_back(U"  Line " + std::u32string(1, static_cast<char32_t>(U'0' + (i / 10u % 10u))) +
@@ -64,8 +67,8 @@ std::unique_ptr<singleCharSpinner> makeSpinner(AnimationManager& animations,
                                                singleSpinnerData style = singleSpinnerStyle::braille) {
   auto spinner = std::make_unique<singleCharSpinner>(style);
   spinner->style.setColours(ColourPair{
-    .fg = NamedColour::DarkRed,
-    .bg = NamedColour::DarkMagenta
+    .fg = NamedColour::Cyan,
+    .bg = NamedColour::Black
   });
   animations.add(spinner.get());
   return spinner;
@@ -232,6 +235,11 @@ std::unique_ptr<Widget> buildUI(AppState& state, AnimationManager& animations) {
   // spinner (owned by the tree, animated by the manager)
   auto spinner = makeSpinner(animations);
 
+
+  auto progressB = std::make_unique<progressBar>(state.progress);
+  progressB->colours.push_back(NamedColour::White);
+  progressB->background = NamedColour::Black;
+
   // ── Root Column: header | body row | split pane | scroll | spinner | footer ──
 
   auto root = std::make_unique<Column>();
@@ -241,7 +249,8 @@ std::unique_ptr<Widget> buildUI(AppState& state, AnimationManager& animations) {
       .addChild(std::move(splitBox), SizeSpec{SizeType::Fixed, 6, {}},  SizeSpec{SizeType::Flex, 1, {}})
       .addChild(std::move(scrollBox), SizeSpec{SizeType::Flex,    1, {}},  SizeSpec{SizeType::Flex, 1, {}})
       .addChild(std::move(spinner), SizeSpec{SizeType::Content, 0, {}}, SizeSpec{SizeType::Content, 0, {}})
-      .addChild(std::move(footerText),SizeSpec{SizeType::Content, 0, {}}, SizeSpec{SizeType::Flex, 1, {}});
+      .addChild(std::move(footerText),SizeSpec{SizeType::Content, 0, {}}, SizeSpec{SizeType::Flex, 1, {}})
+      .addChild(std::move(progressB), SizeSpec{SizeType::Fixed,    2, {}},  SizeSpec{SizeType::Percentage, 50, {}});
 
   // ── Wrap in Overlay with a modal popup ──────────────────────────────────────
 
@@ -296,6 +305,8 @@ int main() {
   bool running = true;
   while (running) {
     tools::cursorHomePosition();
+
+    if (state.progress < 100.0f) state.progress += 1.0f;
 
     tree.fb.resizeBuffer();
     tree.layout({0, 0, tree.fb.terminalData.row, tree.fb.terminalData.col});
