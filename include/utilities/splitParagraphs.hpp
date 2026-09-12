@@ -101,7 +101,8 @@ inline std::vector<std::u32string> convertStringToParagraph(const std::u32string
 }
 
 inline std::size_t findHeightForParagraph(const std::u32string& text, std::size_t length){
-  if(length == 0) return 0;
+  if (length == 0) return 0;
+  if (text.empty()) return 1;
   return static_cast<std::size_t>(std::ceil(static_cast<float>(text.size())/static_cast<float>(length)));
 }
 
