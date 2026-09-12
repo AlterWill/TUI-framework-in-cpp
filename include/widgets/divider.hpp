@@ -33,8 +33,6 @@ struct divider : Widget {
     }
   };
 
-  void layout(const Rect&) override {}
-
   void render(RenderContext& rendercontext) override {
     std::size_t avaiableWidth = base.padding.left + base.padding.right;
     std::size_t avaiableHeight = base.padding.top + base.padding.bottom;

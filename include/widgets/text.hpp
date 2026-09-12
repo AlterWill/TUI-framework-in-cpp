@@ -47,8 +47,6 @@ struct Text : public Widget {
     return *this;
   }
 
-  void layout(const Rect&) override {}
-
   Size measure(const SizeConstraints& constraints) override {
     const auto& padding = base.widgetBase.padding;
     std::size_t totalPadH = padding.top + padding.bottom;

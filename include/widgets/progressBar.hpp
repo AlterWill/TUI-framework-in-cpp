@@ -18,7 +18,6 @@ struct progressBar : Widget {
     return Size{std::clamp(height, constraints.getMinHeight(), constraints.getMaxHeight()), constraints.getMaxWidth()};
   };
 
-  void layout(const Rect&) override {};
   bool handleEvent(const Event&) override { return false; }
 
   void render(RenderContext& rendercontext) override {
