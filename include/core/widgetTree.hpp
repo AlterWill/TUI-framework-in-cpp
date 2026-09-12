@@ -51,11 +51,11 @@ class WidgetTree {
 
   void layout(const Rect& r) {
     if (!root.widget) return;
-    if (r.height < root.margin.top + root.margin.bottom ||
-        r.width < root.margin.left + root.margin.right)
+    if (r.height < root.margin.vertical() ||
+        r.width < root.margin.horizontal())
       return;
-    std::size_t rootHeight = r.height - root.margin.top - root.margin.bottom;
-    std::size_t rootWidth = r.width - root.margin.left - root.margin.right;
+    std::size_t rootHeight = r.height - root.margin.vertical();
+    std::size_t rootWidth = r.width - root.margin.horizontal();
     
     Size preferredSize = root.widget->measure(
       SizeConstraints{

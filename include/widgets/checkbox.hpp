@@ -28,7 +28,7 @@ struct checkbox : toggle {
   }
 
   checkbox& withPadding(Insets p) {
-    toggle::base.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -46,7 +46,7 @@ struct checkbox : toggle {
       }
     } else if (std::holds_alternative<keyEvent>(event)) {
       const keyEvent& ke = std::get<keyEvent>(event);
-      if ((ke.getKey() == '\n' || ke.getKey() == ' ') && base.focused) {
+      if ((ke.getKey() == '\n' || ke.getKey() == ' ') && isFocused()) {
         flip();
         return true;
       }

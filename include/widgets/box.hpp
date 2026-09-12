@@ -67,7 +67,7 @@ struct Box : public SingleChildWidget {
   }
 
   Box& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -77,13 +77,12 @@ struct Box : public SingleChildWidget {
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    const auto& padding = base.widgetBase.padding;
     const auto& child = base.child;
 
-    std::size_t extraWidth = (2 * boxBase.borderSize) + padding.left + padding.right +
-                             (child.widget ? (child.margin.left + child.margin.right) : 0);
-    std::size_t extraHeight = (2 * boxBase.borderSize) + padding.top + padding.bottom +
-                              (child.widget ? (child.margin.top + child.margin.bottom) : 0);
+    std::size_t extraWidth = (2 * boxBase.borderSize) + padding.horizontal() +
+                             (child.widget ? (child.margin.horizontal()) : 0);
+    std::size_t extraHeight = (2 * boxBase.borderSize) + padding.vertical() +
+                              (child.widget ? (child.margin.vertical()) : 0);
 
     if (constraints.getMaxWidth() < extraWidth || constraints.getMaxHeight() < extraHeight) {
       return Size{0, 0};
@@ -122,13 +121,12 @@ struct Box : public SingleChildWidget {
 
   void drawBorder(RenderContext& rendercontext) {
     const Rect& rect = rendercontext.getRect();
-    const auto& padding = base.widgetBase.padding;
     const auto& child = base.child;
 
-    std::size_t extraW = (2 * boxBase.borderSize) + padding.left + padding.right +
-                         (child.widget ? (child.margin.left + child.margin.right) : 0);
-    std::size_t extraH = (2 * boxBase.borderSize) + padding.top + padding.bottom +
-                         (child.widget ? (child.margin.top + child.margin.bottom) : 0);
+    std::size_t extraW = (2 * boxBase.borderSize) + padding.horizontal() +
+                         (child.widget ? (child.margin.horizontal()) : 0);
+    std::size_t extraH = (2 * boxBase.borderSize) + padding.vertical() +
+                         (child.widget ? (child.margin.vertical()) : 0);
 
     if (rect.width < extraW || rect.height < extraH) {
       return;
@@ -189,14 +187,14 @@ struct Box : public SingleChildWidget {
   void setRectForChild(const Rect& rect) override {
     if (!base.child.widget) return;
 
-    std::size_t extraW = (2 * boxBase.borderSize) + base.widgetBase.padding.left + base.widgetBase.padding.right +
-                         base.child.margin.left + base.child.margin.right;
-    std::size_t extraH = (2 * boxBase.borderSize) + base.widgetBase.padding.top + base.widgetBase.padding.bottom +
-                         base.child.margin.top + base.child.margin.bottom;
+    std::size_t extraW = (2 * boxBase.borderSize) + padding.horizontal() +
+                         base.child.margin.horizontal();
+    std::size_t extraH = (2 * boxBase.borderSize) + padding.vertical() +
+                         base.child.margin.vertical();
 
     base.child.rect = Rect{
-        rect.x + boxBase.borderSize + base.widgetBase.padding.left + base.child.margin.left,
-        rect.y + boxBase.borderSize + base.widgetBase.padding.top + base.child.margin.top,
+        rect.x + boxBase.borderSize + padding.left + base.child.margin.left,
+        rect.y + boxBase.borderSize + padding.top + base.child.margin.top,
         (rect.height > extraH) ? (rect.height - extraH) : 0,
         (rect.width > extraW) ? (rect.width - extraW) : 0
     };

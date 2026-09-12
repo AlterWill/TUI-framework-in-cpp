@@ -22,7 +22,7 @@ struct Stack : public MultiChildWidget {
 
   // Builder methods
   Stack& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -56,9 +56,8 @@ struct Stack : public MultiChildWidget {
       return Size{0, 0};
     }
 
-    const auto& padding = base.widgetBase.padding;
-    std::size_t padW = padding.left + padding.right;
-    std::size_t padH = padding.top + padding.bottom;
+    std::size_t padW = padding.horizontal();
+    std::size_t padH = padding.vertical();
 
     std::size_t usableMaxW = constraints.getMaxWidth() > padW ? constraints.getMaxWidth() - padW : 0;
     std::size_t usableMaxH = constraints.getMaxHeight() > padH ? constraints.getMaxHeight() - padH : 0;
@@ -69,8 +68,8 @@ struct Stack : public MultiChildWidget {
     for (auto& child : base.children) {
       if (!child.widget) continue;
 
-      std::size_t margW = child.margin.left + child.margin.right;
-      std::size_t margH = child.margin.top + child.margin.bottom;
+      std::size_t margW = child.margin.horizontal();
+      std::size_t margH = child.margin.vertical();
 
       std::size_t childMaxW = usableMaxW > margW ? usableMaxW - margW : 0;
       std::size_t childMaxH = usableMaxH > margH ? usableMaxH - margH : 0;
@@ -96,14 +95,13 @@ struct Stack : public MultiChildWidget {
     if (base.children.empty()) return;
 
     stackBase.rect = rect;
-    const auto& padding = base.widgetBase.padding;
     std::size_t startX = rect.x + padding.left;
     std::size_t startY = rect.y + padding.top;
 
     std::size_t usableW =
-        rect.width > (padding.left + padding.right) ? rect.width - padding.left - padding.right : 0;
+        rect.width > padding.horizontal() ? rect.width - padding.horizontal() : 0;
     std::size_t usableH =
-        rect.height > (padding.top + padding.bottom) ? rect.height - padding.top - padding.bottom : 0;
+        rect.height > padding.vertical() ? rect.height - padding.vertical() : 0;
 
     for (auto& child : base.children) {
       std::size_t childW = usableW;  // stretch to fill available width

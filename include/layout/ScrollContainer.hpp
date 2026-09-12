@@ -47,7 +47,7 @@ struct Scroll : public SingleChildWidget {
   }
 
   Scroll& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -55,9 +55,8 @@ struct Scroll : public SingleChildWidget {
   Size measure(const SizeConstraints& constraints) override {
     if (!base.child.widget) return Size{0, 0};
 
-    const auto& padding = base.widgetBase.padding;
-    std::size_t padW = padding.left + padding.right;
-    std::size_t padH = padding.top + padding.bottom;
+    std::size_t padW = padding.horizontal();
+    std::size_t padH = padding.vertical();
 
     std::size_t maxW = constraints.getMaxWidth() > padW ? constraints.getMaxWidth() - padW : 0;
     std::size_t maxH = constraints.getMaxHeight() > padH ? constraints.getMaxHeight() - padH : 0;
@@ -111,11 +110,10 @@ struct Scroll : public SingleChildWidget {
     // Child draws into offscreen buffer
     base.child.widget->render(offscreenCtx);
 
-    const auto& padding = base.widgetBase.padding;
     const Rect& viewportRect = rendercontext.getRect();
 
-    std::size_t padW = padding.left + padding.right;
-    std::size_t padH = padding.top + padding.bottom;
+    std::size_t padW = padding.horizontal();
+    std::size_t padH = padding.vertical();
     std::size_t visibleW = viewportRect.width > padW ? viewportRect.width - padW : 0;
     std::size_t visibleH = viewportRect.height > padH ? viewportRect.height - padH : 0;
 

@@ -8,7 +8,6 @@
 #include "utilities/splitParagraphs.hpp"
 
 struct button : Widget {
-  WidgetBase base;
   std::u32string text;
   Style style;
   HorizontalAlignment hAlignment;
@@ -16,7 +15,7 @@ struct button : Widget {
   std::function<void()> onClick;
 
  public:
-  button() { base.setFocusable(); }
+  button() { setFocusable(); }
 
   bool handleEvent(const Event& event) override {
     if (std::holds_alternative<MouseEvent>(event)) {
@@ -27,7 +26,7 @@ struct button : Widget {
       }
     } else if (std::holds_alternative<keyEvent>(event)) {
       const keyEvent& ke = std::get<keyEvent>(event);
-      if ((ke.getKey() == '\n' || ke.getKey() == ' ') && base.focused) {
+      if ((ke.getKey() == '\n' || ke.getKey() == ' ') && isFocused()) {
         if (onClick) onClick();
         return true;
       }
@@ -36,8 +35,8 @@ struct button : Widget {
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    std::size_t horizontalPadding = base.padding.left + base.padding.right;
-    std::size_t verticalPadding = base.padding.top + base.padding.bottom;
+    std::size_t horizontalPadding = padding.horizontal();
+    std::size_t verticalPadding = padding.vertical();
     Size result{};
 
     if (constraints.getMaxWidth() <= horizontalPadding || constraints.getMaxHeight() <= verticalPadding) return result;
@@ -62,8 +61,8 @@ struct button : Widget {
 
   void render(RenderContext& rendercontext) override {
     const Rect& rect = rendercontext.getRect();
-    std::size_t horizontalPadding = base.padding.left + base.padding.right;
-    std::size_t verticalPadding = base.padding.top + base.padding.bottom;
+    std::size_t horizontalPadding = padding.horizontal();
+    std::size_t verticalPadding = padding.vertical();
 
     if (rect.width <= horizontalPadding || rect.height <= verticalPadding) return;
 
@@ -83,11 +82,11 @@ struct button : Widget {
     std::vector<std::u32string> lines = convertStringToParagraph(text, contentWidth);
     if (lines.empty()) return;
 
-    std::size_t startY = rect.getY() + base.padding.top + alignOffset(contentHeight, lines.size(), vAlignment);
+    std::size_t startY = rect.getY() + padding.top + alignOffset(contentHeight, lines.size(), vAlignment);
 
     for (std::size_t lineIdx = 0; lineIdx < lines.size() && lineIdx < contentHeight; ++lineIdx) {
       const std::u32string& line = lines[lineIdx];
-      std::size_t startX = rect.getX() + base.padding.left + alignOffset(contentWidth, line.size(), hAlignment);
+      std::size_t startX = rect.getX() + padding.left + alignOffset(contentWidth, line.size(), hAlignment);
 
       for (std::size_t x = 0; x < line.size() && x < contentWidth; ++x) {
         cell.setGlyph(line[x]);

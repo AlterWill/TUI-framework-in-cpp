@@ -4,7 +4,6 @@
 #include "core/widget.hpp"
 
 struct SingleChildWidgetBase {
-  WidgetBase widgetBase;
   LayoutNode child;
 };
 
@@ -15,7 +14,7 @@ struct SingleChildWidget : public Widget {
   explicit SingleChildWidget(std::unique_ptr<Widget> c) {
     base.child.widget = std::move(c);
   }
-  explicit SingleChildWidget(LayoutNode c) : base{.widgetBase = {}, .child = std::move(c)} {}
+  explicit SingleChildWidget(LayoutNode c) : base{.child = std::move(c)} {}
 
   virtual void setRectForChild(const Rect&) {}
 

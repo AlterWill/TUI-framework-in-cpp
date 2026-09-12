@@ -12,7 +12,6 @@
 #include "widgets/slider.hpp"
 
 struct SplitPane : public Widget {
-  WidgetBase widgetBase;
   LayoutNode first;
   LayoutNode second;
 
@@ -72,14 +71,13 @@ struct SplitPane : public Widget {
   }
 
   SplitPane& withPadding(Insets p) {
-    widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    const auto& padding = widgetBase.padding;
-    std::size_t padW = padding.left + padding.right;
-    std::size_t padH = padding.top + padding.bottom;
+    std::size_t padW = padding.horizontal();
+    std::size_t padH = padding.vertical();
 
     std::size_t maxW = constraints.getMaxWidth() > padW ? constraints.getMaxWidth() - padW : 0;
     std::size_t maxH = constraints.getMaxHeight() > padH ? constraints.getMaxHeight() - padH : 0;
@@ -123,15 +121,14 @@ struct SplitPane : public Widget {
   }
 
   void layout(const Rect& rect) override {
-    const auto& padding = widgetBase.padding;
     bool horizontal = (orientation == Orientation::Horizontal);
 
     std::size_t startX = rect.x + padding.left;
     std::size_t startY = rect.y + padding.top;
     std::size_t usableW =
-        rect.width > (padding.left + padding.right) ? rect.width - padding.left - padding.right : 0;
+        rect.width > padding.horizontal() ? rect.width - padding.horizontal() : 0;
     std::size_t usableH =
-        rect.height > (padding.top + padding.bottom) ? rect.height - padding.top - padding.bottom : 0;
+        rect.height > padding.vertical() ? rect.height - padding.vertical() : 0;
 
     if (usableW == 0 || usableH == 0) return;
 

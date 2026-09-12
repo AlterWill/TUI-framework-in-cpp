@@ -9,7 +9,6 @@
 #include "utilities/splitParagraphs.hpp"
 
 struct TextBase {
-  WidgetBase widgetBase;
   std::vector<std::u32string>& lines;
   Style style;
   HorizontalAlignment alignment{HorizontalAlignment::Left};
@@ -19,12 +18,12 @@ struct Text : public Widget {
   TextBase base;
 
   explicit Text(std::vector<std::u32string>& l)
-      : base{.widgetBase = {}, .lines = l, .style = {}, .alignment = HorizontalAlignment::Left} {}
+      : base{.lines = l, .style = {}, .alignment = HorizontalAlignment::Left} {}
 
   Text(std::vector<std::u32string>& l,
        Style s,
        HorizontalAlignment a = HorizontalAlignment::Left)
-      : base{.widgetBase = {}, .lines = l, .style = std::move(s), .alignment = a} {}
+      : base{.lines = l, .style = std::move(s), .alignment = a} {}
 
   // Builder methods
   Text& withStyle(Style s) {
@@ -43,14 +42,13 @@ struct Text : public Widget {
   }
 
   Text& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    const auto& padding = base.widgetBase.padding;
-    std::size_t totalPadH = padding.top + padding.bottom;
-    std::size_t totalPadW = padding.left + padding.right;
+    std::size_t totalPadH = padding.vertical();
+    std::size_t totalPadW = padding.horizontal();
 
     std::size_t maxLineWidth = 0;
     for (const auto& line : base.lines) {
@@ -83,9 +81,8 @@ struct Text : public Widget {
 
   void render(RenderContext& rendercontext) override {
     const Rect& rect = rendercontext.getRect();
-    const auto& padding = base.widgetBase.padding;
-    std::size_t totalPadH = padding.top + padding.bottom;
-    std::size_t totalPadW = padding.left + padding.right;
+    std::size_t totalPadH = padding.vertical();
+    std::size_t totalPadW = padding.horizontal();
 
     if (rect.height <= totalPadH || rect.width <= totalPadW) {
       return;
@@ -104,6 +101,10 @@ struct Text : public Widget {
     }
 
     for (const auto& line : base.lines) {
+      if (line.empty()) {
+        writePoint.y++;
+        continue;
+      }
       auto sentences = convertStringToParagraph(line, contentWidth);
       for (const auto& sentence : sentences) {
         if (writePoint.y >= maxY) return;

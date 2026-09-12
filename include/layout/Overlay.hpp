@@ -21,7 +21,7 @@ struct Overlay : public Stack {
   Overlay() = default;
 
   Overlay& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -95,9 +95,8 @@ struct Overlay : public Stack {
       return Size{0, 0};
     }
 
-    const auto& padding = base.widgetBase.padding;
-    std::size_t padW = padding.left + padding.right;
-    std::size_t padH = padding.top + padding.bottom;
+    std::size_t padW = padding.horizontal();
+    std::size_t padH = padding.vertical();
 
     std::size_t usableMaxW = constraints.getMaxWidth() > padW ? constraints.getMaxWidth() - padW : 0;
     std::size_t usableMaxH = constraints.getMaxHeight() > padH ? constraints.getMaxHeight() - padH : 0;
@@ -127,13 +126,12 @@ struct Overlay : public Stack {
     if (base.children.empty()) return;
 
     stackBase.rect = rect;
-    const auto& padding = base.widgetBase.padding;
     std::size_t startX = rect.x + padding.left;
     std::size_t startY = rect.y + padding.top;
     std::size_t usableW =
-        rect.width > (padding.left + padding.right) ? rect.width - padding.left - padding.right : 0;
+        rect.width > padding.horizontal() ? rect.width - padding.horizontal() : 0;
     std::size_t usableH =
-        rect.height > (padding.top + padding.bottom) ? rect.height - padding.top - padding.bottom : 0;
+        rect.height > padding.vertical() ? rect.height - padding.vertical() : 0;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;

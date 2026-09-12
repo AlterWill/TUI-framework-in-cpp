@@ -7,7 +7,6 @@
 #include "widgets/animatebleWidget.hpp"
 
 struct singleCharSpinner : animatebleWidget {
-  WidgetBase base;
   singleSpinnerData spinnerStyle;
   std::size_t frameIndex{};
   std::chrono::steady_clock::time_point lastUpdate{};
@@ -17,7 +16,7 @@ struct singleCharSpinner : animatebleWidget {
   singleCharSpinner& withVisibility(bool v) { visible = v; return *this; }
 
   singleCharSpinner(singleSpinnerData data = singleSpinnerStyle::braille)
-      : base{}, spinnerStyle(data), lastUpdate(std::chrono::steady_clock::now()) {}
+      : spinnerStyle(data), lastUpdate(std::chrono::steady_clock::now()) {}
 
   singleCharSpinner& withStyle(Style s) {
     style = std::move(s);
@@ -28,7 +27,7 @@ struct singleCharSpinner : animatebleWidget {
     return *this;
   }
   singleCharSpinner& withPadding(Insets p) {
-    base.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -62,20 +61,20 @@ struct singleCharSpinner : animatebleWidget {
 
   Size measure(const SizeConstraints& constraints) override {
     if(!visible) return Size{0,0};
-    std::size_t height = base.padding.getTop() + base.padding.getBottom() + 1;
-    std::size_t width = base.padding.getLeft() + base.padding.getRight() + 1;
+    std::size_t height = padding.vertical() + 1;
+    std::size_t width = padding.horizontal() + 1;
     return Size{std::clamp(height, constraints.getMinHeight(), constraints.getMaxHeight()),
         std::clamp(width, constraints.getMinWidth(), constraints.getMaxWidth())};
   }
 
   void render(RenderContext& rendercontext) override {
     if(!visible) return;
-    if (rendercontext.getRect().getHeight() <= base.padding.getTop() + base.padding.getBottom() ||
-        rendercontext.getRect().getWidth() <= base.padding.getLeft() + base.padding.getRight()) {
+    if (rendercontext.getRect().getHeight() <= padding.vertical() ||
+        rendercontext.getRect().getWidth() <= padding.horizontal()) {
       return;
     }
 
-    rendercontext.setCell(base.padding.getLeft(), base.padding.getTop(), Cell{getFrame(), style});
+    rendercontext.setCell(padding.getLeft(), padding.getTop(), Cell{getFrame(), style});
   };
 
   void layout(const Rect&) override {}

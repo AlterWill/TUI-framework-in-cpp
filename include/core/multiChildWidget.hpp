@@ -7,7 +7,6 @@
 #include "core/widget.hpp"
 
 struct MultiChildWidgetBase {
-  WidgetBase widgetBase;
   std::vector<LayoutNode> children;
   std::size_t gap{};
 };

@@ -22,13 +22,13 @@ struct LinearLayoutSolver {
   }
 
   static inline std::size_t getMainMargin(const LayoutNode& node, Axis axis) {
-    return (axis == Axis::Horizontal) ? (node.margin.left + node.margin.right)
-                                      : (node.margin.top + node.margin.bottom);
+    return (axis == Axis::Horizontal) ? (node.margin.horizontal())
+                                      : (node.margin.vertical());
   }
 
   static inline std::size_t getCrossMargin(const LayoutNode& node, Axis axis) {
-    return (axis == Axis::Horizontal) ? (node.margin.top + node.margin.bottom)
-                                      : (node.margin.left + node.margin.right);
+    return (axis == Axis::Horizontal) ? (node.margin.vertical())
+                                      : (node.margin.horizontal());
   }
 
   static inline SizeType getCrossType(const LayoutNode& node, Axis axis) {
@@ -242,8 +242,8 @@ struct LinearLayoutSolver {
       return Size{0, 0};
     }
 
-    std::size_t padMain = (axis == Axis::Horizontal) ? (padding.left + padding.right) : (padding.top + padding.bottom);
-    std::size_t padCross = (axis == Axis::Horizontal) ? (padding.top + padding.bottom) : (padding.left + padding.right);
+    std::size_t padMain = (axis == Axis::Horizontal) ? padding.horizontal() : padding.vertical();
+    std::size_t padCross = (axis == Axis::Horizontal) ? padding.vertical() : padding.horizontal();
     std::size_t totalGaps = (children.size() > 1) ? (children.size() - 1) * gap : 0;
 
     std::size_t maxAvailableMain = (axis == Axis::Horizontal) ? constraints.getMaxWidth() : constraints.getMaxHeight();

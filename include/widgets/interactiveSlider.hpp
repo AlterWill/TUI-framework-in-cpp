@@ -8,13 +8,14 @@
 #include "widgets/slider.hpp"
 
 struct interactiveSlider : public Widget {
-  WidgetBase base;
   slider data;
   Orientation orientation{Orientation::Horizontal};
 
-  interactiveSlider() = default;
+  interactiveSlider() { setFocusable(); }
 
-  explicit interactiveSlider(double initialValue) : data(initialValue) {}
+  explicit interactiveSlider(double initialValue) : data(initialValue) {
+    setFocusable();
+  }
 
   interactiveSlider& withOrientation(Orientation o) {
     orientation = o;
@@ -47,15 +48,15 @@ struct interactiveSlider : public Widget {
   }
 
   interactiveSlider& withPadding(Insets p) {
-    base.padding = p;
+    padding = p;
     return *this;
   }
 
   double getValue() const { return data.getValue(); }
 
   Size measure(const SizeConstraints& constraints) override {
-    std::size_t padW = base.padding.left + base.padding.right;
-    std::size_t padH = base.padding.top + base.padding.bottom;
+    std::size_t padW = padding.horizontal();
+    std::size_t padH = padding.vertical();
 
     std::size_t w, h;
     if (orientation == Orientation::Horizontal) {
@@ -73,10 +74,10 @@ struct interactiveSlider : public Widget {
 
   void render(RenderContext& rendercontext) override {
     const Rect& rect = rendercontext.getRect();
-    std::size_t padL = base.padding.left;
-    std::size_t padR = base.padding.right;
-    std::size_t padT = base.padding.top;
-    std::size_t padB = base.padding.bottom;
+    std::size_t padL = padding.left;
+    std::size_t padR = padding.right;
+    std::size_t padT = padding.top;
+    std::size_t padB = padding.bottom;
 
     if (rect.width <= padL + padR || rect.height <= padT + padB) return;
 

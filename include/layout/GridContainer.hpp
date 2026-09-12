@@ -52,7 +52,7 @@ struct Grid : public MultiChildWidget {
   }
 
   Grid& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -93,7 +93,7 @@ struct Grid : public MultiChildWidget {
     }
 
     Size measuredSize = LinearLayoutSolver::solveMeasure(
-        rowNodes, Axis::Vertical, constraints, base.widgetBase.padding, rowGap);
+        rowNodes, Axis::Vertical, constraints, padding, rowGap);
 
     for (std::size_t r = 0; r < Rows; ++r) {
       rowNodes[r].widget.release();
@@ -104,7 +104,6 @@ struct Grid : public MultiChildWidget {
 
   void setRectForChildren(const Rect& rect) override {
     gridBase.rect = rect;
-    const auto& padding = base.widgetBase.padding;
 
     std::vector<LayoutNode> rowNodes(Rows);
     for (std::size_t r = 0; r < Rows; ++r) {
@@ -123,7 +122,7 @@ struct Grid : public MultiChildWidget {
     std::size_t startX = rect.x + padding.left;
     std::size_t currentY = rect.y + padding.top;
     std::size_t usableWidth =
-        rect.width > (padding.left + padding.right) ? rect.width - padding.left - padding.right : 0;
+        rect.width > padding.horizontal() ? rect.width - padding.horizontal() : 0;
 
     for (std::size_t r = 0; r < Rows; ++r) {
       std::size_t rowH = rowNodes[r].measured.height;

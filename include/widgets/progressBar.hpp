@@ -6,7 +6,6 @@
 
 struct progressBar : Widget {
   float& progress;
-  WidgetBase base;
   progressBarData progressBarStyle;
   std::vector<Colour> colours;
   Colour background;
@@ -14,15 +13,15 @@ struct progressBar : Widget {
   progressBar(float& p, progressBarData pbd = progressBarStyle::block) : progress(p), progressBarStyle(pbd) {}
 
   Size measure(const SizeConstraints& constraints) override {
-    std::size_t height = base.padding.getTop() + base.padding.getBottom() + 1;
+    std::size_t height = padding.vertical() + 1;
     return Size{std::clamp(height, constraints.getMinHeight(), constraints.getMaxHeight()), constraints.getMaxWidth()};
   };
 
   bool handleEvent(const Event&) override { return false; }
 
   void render(RenderContext& rendercontext) override {
-    std::size_t height = base.padding.getTop() + base.padding.getBottom();
-    std::size_t width = base.padding.getLeft() + base.padding.getRight();
+    std::size_t height = padding.vertical();
+    std::size_t width = padding.horizontal();
 
     height = (rendercontext.getRect().getHeight() <= height) ? 0 : rendercontext.getRect().getHeight() - height;
     width = (rendercontext.getRect().getWidth() <= width) ? 0 : rendercontext.getRect().getWidth() - width;

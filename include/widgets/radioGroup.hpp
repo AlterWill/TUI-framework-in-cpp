@@ -49,7 +49,7 @@ struct radioGroup : Container {
       if (key->getKey() == '\n' || key->getKey() == ' ') {
         for (std::size_t i = 0; i < base.children.size(); ++i) {
           if (auto* cb = dynamic_cast<checkbox*>(base.children[i].widget.get())) {
-            if (cb->base.focused) {
+            if (cb->isFocused()) {
               select(i);
               return true;
             }

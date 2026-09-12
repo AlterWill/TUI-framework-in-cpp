@@ -31,24 +31,22 @@
 
 struct Widget {
  public:
+  Widget* parent = nullptr;
+  Insets padding;
+
+  void setFocusable() { focusable = true; }
+  bool isFocusable() const { return focusable; }
+  void setFocused(bool f) { focused = f; }
+  bool isFocused() const { return focused; }
+
   virtual Size measure(const SizeConstraints& constraints) = 0;
-  virtual void layout(const Rect& ){};
+  virtual void layout(const Rect&) {};
   virtual void render(RenderContext& rendercontext) = 0;
   virtual bool handleEvent(const Event&) { return false; }
 
   virtual ~Widget() = default;
-};
 
-struct WidgetBase {
  protected:
-  bool focusable{false};
-
- public:
-  Widget* parent = nullptr;
   bool focused{false};
-
-  Insets padding;
-
-  void setFocusable(){ focusable = true;}
+  bool focusable{false};
 };
-

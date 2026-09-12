@@ -5,7 +5,6 @@
 #include "utilities/dividerStyle.hpp"
 
 struct divider : Widget {
-  WidgetBase base;
   Orientation orientation;
   char32_t dividerGlyph{dividerStyle::horizontal::light};
   ColourPair colours{};
@@ -34,8 +33,8 @@ struct divider : Widget {
   };
 
   void render(RenderContext& rendercontext) override {
-    std::size_t avaiableWidth = base.padding.left + base.padding.right;
-    std::size_t avaiableHeight = base.padding.top + base.padding.bottom;
+    std::size_t avaiableWidth = padding.horizontal();
+    std::size_t avaiableHeight = padding.vertical();
     if (rendercontext.getRect().getHeight() <= avaiableHeight || rendercontext.getRect().getWidth() <= avaiableWidth)
       return;
 
@@ -45,16 +44,16 @@ struct divider : Widget {
     Cell cell{dividerGlyph, Style{}};
     cell.setColour(colours);
     if (orientation == Orientation::Horizontal) {
-      for (std::size_t i = rendercontext.getRect().getX() + base.padding.getLeft();
-          i < rendercontext.getRect().getX() + avaiableWidth + base.padding.getLeft();
+      for (std::size_t i = rendercontext.getRect().getX() + padding.getLeft();
+          i < rendercontext.getRect().getX() + avaiableWidth + padding.getLeft();
           i++) {
-        rendercontext.setCell(i, rendercontext.getRect().getY() + base.padding.getTop() + (avaiableHeight / 2), cell);
+        rendercontext.setCell(i, rendercontext.getRect().getY() + padding.getTop() + (avaiableHeight / 2), cell);
       }
     } else {
-      for (std::size_t i = rendercontext.getRect().getY() + base.padding.top;
-          i < rendercontext.getRect().getY() + avaiableHeight + base.padding.top;
+      for (std::size_t i = rendercontext.getRect().getY() + padding.top;
+          i < rendercontext.getRect().getY() + avaiableHeight + padding.top;
           i++) {
-        rendercontext.setCell(rendercontext.getRect().getX() + base.padding.getLeft() + (avaiableWidth / 2),i, cell);
+        rendercontext.setCell(rendercontext.getRect().getX() + padding.getLeft() + (avaiableWidth / 2),i, cell);
       }
     }
   };

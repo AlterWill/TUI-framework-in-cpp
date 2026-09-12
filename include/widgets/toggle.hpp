@@ -7,14 +7,13 @@
 #include "utilities/checkboxStyle.hpp"
 
 struct toggle : Widget {
-  WidgetBase base;
   bool* state{nullptr};
   Style style{};
   checkboxData checkboxStyleData{checkboxStyle::x};
 
-  toggle() { base.setFocusable(); }
-  explicit toggle(bool& externalState) : state(&externalState) { base.setFocusable(); }
-  explicit toggle(checkboxData data) : checkboxStyleData(data) { base.setFocusable(); }
+  toggle() { setFocusable(); }
+  explicit toggle(bool& externalState) : state(&externalState) { setFocusable(); }
+  explicit toggle(checkboxData data) : checkboxStyleData(data) { setFocusable(); }
 
   toggle& withState(bool& s) {
     state = &s;
@@ -32,7 +31,7 @@ struct toggle : Widget {
   }
 
   toggle& withPadding(Insets p) {
-    base.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -48,14 +47,14 @@ struct toggle : Widget {
 
   char32_t glyph() const {
     if (isOn()) {
-      return base.focused ? checkboxStyleData.checkedFocused : checkboxStyleData.checked;
+      return isFocused() ? checkboxStyleData.checkedFocused : checkboxStyleData.checked;
     }
-    return base.focused ? checkboxStyleData.uncheckedFocused : checkboxStyleData.unchecked;
+    return isFocused() ? checkboxStyleData.uncheckedFocused : checkboxStyleData.unchecked;
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    std::size_t horizontalPadding = base.padding.left + base.padding.right;
-    std::size_t verticalPadding = base.padding.top + base.padding.bottom;
+    std::size_t horizontalPadding = padding.horizontal();
+    std::size_t verticalPadding = padding.vertical();
 
     std::size_t width = std::clamp(
         horizontalPadding + 1,
@@ -73,8 +72,8 @@ struct toggle : Widget {
 
   void render(RenderContext& rendercontext) override {
     const Rect& rect = rendercontext.getRect();
-    std::size_t horizontalPadding = base.padding.left + base.padding.right;
-    std::size_t verticalPadding = base.padding.top + base.padding.bottom;
+    std::size_t horizontalPadding = padding.horizontal();
+    std::size_t verticalPadding = padding.vertical();
 
     if (rect.width <= horizontalPadding || rect.height <= verticalPadding) return;
 
@@ -89,8 +88,8 @@ struct toggle : Widget {
       }
     }
 
-    std::size_t x = rect.getX() + base.padding.left + (contentWidth - 1) / 2;
-    std::size_t y = rect.getY() + base.padding.top + (contentHeight - 1) / 2;
+    std::size_t x = rect.getX() + padding.left + (contentWidth - 1) / 2;
+    std::size_t y = rect.getY() + padding.top + (contentHeight - 1) / 2;
 
     rendercontext.setCell(x, y, Cell{glyph(), style});
   }

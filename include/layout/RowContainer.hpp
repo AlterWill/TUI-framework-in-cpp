@@ -22,7 +22,7 @@ struct Row : public MultiChildWidget {
   }
 
   Row& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -41,7 +41,7 @@ struct Row : public MultiChildWidget {
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    return LinearLayoutSolver::solveMeasure(base.children, Axis::Horizontal, constraints, base.widgetBase.padding,
+    return LinearLayoutSolver::solveMeasure(base.children, Axis::Horizontal, constraints, padding,
                                            base.gap);
   }
 
@@ -49,11 +49,10 @@ struct Row : public MultiChildWidget {
     if (base.children.empty()) return;
 
     rowBase.rect = rect;
-    const auto& padding = base.widgetBase.padding;
     std::size_t currentX = rect.x + padding.left;
     std::size_t startY = rect.y + padding.top;
     std::size_t usableHeight =
-        rect.height > (padding.top + padding.bottom) ? rect.height - padding.top - padding.bottom : 0;
+        rect.height > padding.vertical() ? rect.height - padding.vertical() : 0;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;
@@ -64,7 +63,7 @@ struct Row : public MultiChildWidget {
                                            child.verticalAlignment);
 
       child.rect = Rect{currentX + child.margin.left, childY, childH, childW};
-      currentX += childW + child.margin.left + child.margin.right + base.gap;
+      currentX += childW + child.margin.horizontal() + base.gap;
     }
   }
 };

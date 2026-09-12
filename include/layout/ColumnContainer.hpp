@@ -23,7 +23,7 @@ struct Column : public MultiChildWidget {
   }
 
   Column& withPadding(Insets p) {
-    base.widgetBase.padding = p;
+    padding = p;
     return *this;
   }
 
@@ -42,7 +42,7 @@ struct Column : public MultiChildWidget {
   }
 
   Size measure(const SizeConstraints& constraints) override {
-    return LinearLayoutSolver::solveMeasure(base.children, Axis::Vertical, constraints, base.widgetBase.padding,
+    return LinearLayoutSolver::solveMeasure(base.children, Axis::Vertical, constraints, padding,
                                            base.gap);
   }
 
@@ -50,11 +50,10 @@ struct Column : public MultiChildWidget {
     if (base.children.empty()) return;
 
     colBase.rect = rect;
-    const auto& padding = base.widgetBase.padding;
     std::size_t startX = rect.x + padding.left;
     std::size_t currentY = rect.y + padding.top;
     std::size_t usableWidth =
-        rect.width > (padding.left + padding.right) ? rect.width - padding.left - padding.right : 0;
+        rect.width > padding.horizontal() ? rect.width - padding.horizontal() : 0;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;
@@ -65,7 +64,7 @@ struct Column : public MultiChildWidget {
                                            child.horizontalAlignment);
 
       child.rect = Rect{childX, currentY + child.margin.top, childH, childW};
-      currentY += childH + child.margin.top + child.margin.bottom + base.gap;
+      currentY += childH + child.margin.vertical() + base.gap;
     }
   }
 };

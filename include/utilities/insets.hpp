@@ -20,6 +20,9 @@ struct Insets {
   std::size_t getRight() const { return right; }
   std::size_t getLeft() const { return left; }
 
+  std::size_t vertical() const { return top + bottom; }
+  std::size_t horizontal() const { return left + right; }
+
   // Setters
   void setTop(std::size_t val) { top = val; }
   void setBottom(std::size_t val) { bottom = val; }
