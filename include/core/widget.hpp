@@ -32,7 +32,7 @@
 struct Widget {
  public:
   virtual Size measure(const SizeConstraints& constraints) = 0;
-  virtual void layout(const Rect& rect) = 0;
+  virtual void layout(const Rect& ){};
   virtual void render(RenderContext& rendercontext) = 0;
   virtual bool handleEvent(const Event&) { return false; }
 
@@ -48,5 +48,7 @@ struct WidgetBase {
   bool focused{false};
 
   Insets padding;
+
+  void setFocusable(){ focusable = true;}
 };
 
