@@ -119,11 +119,11 @@ Everything related to user input and events.
 
 ## Phase 6 — Interactive Widgets
 
-* [ ] Button
-* [ ] Checkbox
-* [ ] Radio button
-* [ ] Toggle switch
-* [ ] Slider
+* [x] Button
+* [x] Checkbox
+* [x] Radio button
+* [x] Toggle switch
+* [x] Slider
 
 ## Phase 7 — Input Widgets
 
