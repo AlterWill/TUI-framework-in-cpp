@@ -32,25 +32,38 @@ struct checkbox : toggle {
     return *this;
   }
 
+  checkbox& withPrefix(std::u32string p) {
+    toggle::withPrefix(std::move(p));
+    return *this;
+  }
+
+  checkbox& withPrefix(std::string_view p) {
+    toggle::withPrefix(p);
+    return *this;
+  }
+
+  checkbox& withSuffix(std::u32string s) {
+    toggle::withSuffix(std::move(s));
+    return *this;
+  }
+
+  checkbox& withSuffix(std::string_view s) {
+    toggle::withSuffix(s);
+    return *this;
+  }
+
+  checkbox& withLabel(std::u32string l) {
+    toggle::withLabel(std::move(l));
+    return *this;
+  }
+
+  checkbox& withLabel(std::string_view l) {
+    toggle::withLabel(l);
+    return *this;
+  }
+
   bool isChecked() const { return isOn(); }
   void setChecked(bool c) { setState(c); }
   void select() { setState(true); }
   void deselect() { setState(false); }
-
-  bool handleEvent(const Event& event) override {
-    if (std::holds_alternative<MouseEvent>(event)) {
-      const MouseEvent& me = std::get<MouseEvent>(event);
-      if (me.getAction() == MouseAction::Press && me.getButton() == MouseButton::Left) {
-        flip();
-        return true;
-      }
-    } else if (std::holds_alternative<keyEvent>(event)) {
-      const keyEvent& ke = std::get<keyEvent>(event);
-      if ((ke.getKey() == '\n' || ke.getKey() == ' ') && isFocused()) {
-        flip();
-        return true;
-      }
-    }
-    return false;
-  }
 };
