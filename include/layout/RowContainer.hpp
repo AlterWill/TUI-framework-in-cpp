@@ -66,4 +66,37 @@ struct Row : public MultiChildWidget {
       currentX += childW + child.margin.horizontal() + base.gap;
     }
   }
+
+  ConnectionInfo getConnections() const override {
+    ConnectionInfo info;
+    if (base.children.size() < 2 || base.gap == 0) return info;
+
+    const Rect& rect = rowBase.rect;
+    std::size_t currentX = rect.x + padding.left;
+
+    for (std::size_t i = 0; i < base.children.size(); ++i) {
+      const auto& child = base.children[i];
+      std::size_t childW = child.measured.width;
+      std::size_t childH = child.measured.height;
+      std::size_t childY = child.rect.y;
+      currentX += childW + child.margin.horizontal();
+
+      if (i + 1 < base.children.size()) {
+        Rect sepRect{currentX, childY, childH, base.gap};
+        info.addSeparator(sepRect, false, i, i + 1);
+        currentX += base.gap;
+      }
+    }
+
+    for (const auto& child : base.children) {
+      if (child.widget) {
+        auto* mcw = dynamic_cast<const MultiChildWidget*>(child.widget.get());
+        if (mcw) {
+          info.addChildConnections(mcw->getConnections());
+        }
+      }
+    }
+
+    return info;
+  }
 };

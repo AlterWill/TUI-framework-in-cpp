@@ -67,4 +67,37 @@ struct Column : public MultiChildWidget {
       currentY += childH + child.margin.vertical() + base.gap;
     }
   }
+
+  ConnectionInfo getConnections() const override {
+    ConnectionInfo info;
+    if (base.children.size() < 2 || base.gap == 0) return info;
+
+    const Rect& rect = colBase.rect;
+    std::size_t currentY = rect.y + padding.top;
+
+    for (std::size_t i = 0; i < base.children.size(); ++i) {
+      const auto& child = base.children[i];
+      std::size_t childW = child.measured.width;
+      std::size_t childH = child.measured.height;
+      std::size_t childX = child.rect.x;
+      currentY += childH + child.margin.vertical();
+
+      if (i + 1 < base.children.size()) {
+        Rect sepRect{childX, currentY, base.gap, childW};
+        info.addSeparator(sepRect, true, i, i + 1);
+        currentY += base.gap;
+      }
+    }
+
+    for (const auto& child : base.children) {
+      if (child.widget) {
+        auto* mcw = dynamic_cast<const MultiChildWidget*>(child.widget.get());
+        if (mcw) {
+          info.addChildConnections(mcw->getConnections());
+        }
+      }
+    }
+
+    return info;
+  }
 };

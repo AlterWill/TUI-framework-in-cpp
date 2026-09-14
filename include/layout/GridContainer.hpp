@@ -147,6 +147,53 @@ struct Grid : public MultiChildWidget {
     return false;
   }
 
+  ConnectionInfo getConnections() const override {
+    ConnectionInfo info;
+    const Rect& rect = gridBase.rect;
+    std::size_t startX = rect.x + padding.left;
+    std::size_t currentY = rect.y + padding.top;
+
+    for (std::size_t r = 0; r < Rows; ++r) {
+      if (!rows[r].base.children.empty()) {
+        std::size_t rowH = rows[r].base.children[0].measured.height;
+        std::size_t currentX = startX;
+
+        for (std::size_t c = 0; c < Cols; ++c) {
+          const auto& child = rows[r].base.children[c];
+          std::size_t childW = child.measured.width;
+          std::size_t childH = child.measured.height;
+          std::size_t childY = child.rect.y;
+          currentX += childW + child.margin.horizontal();
+
+          if (c + 1 < Cols && colGap > 0) {
+            Rect sepRect{currentX, childY, childH, colGap};
+            info.addSeparator(sepRect, false, c, c + 1);
+            currentX += colGap;
+          }
+        }
+
+        if (r + 1 < Rows && rowGap > 0) {
+          std::size_t sepY = currentY + rowH;
+          std::size_t rowW = 0;
+          for (const auto& ch : rows[r].base.children) {
+            rowW += ch.measured.width + ch.margin.horizontal();
+          }
+          rowW += (Cols > 1) ? (Cols - 1) * colGap : 0;
+          Rect sepRect{startX, sepY, rowGap, rowW};
+          info.addSeparator(sepRect, true, r, r + 1);
+        }
+
+        currentY += rowH + rowGap;
+      }
+    }
+
+    for (const auto& row : rows) {
+      info.addChildConnections(row.getConnections());
+    }
+
+    return info;
+  }
+
  private:
   SizeSpec getRowHeightSpec(std::size_t r) const {
     for (std::size_t c = 0; c < Cols; ++c) {

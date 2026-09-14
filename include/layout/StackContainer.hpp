@@ -135,4 +135,17 @@ struct Stack : public MultiChildWidget {
 
     MultiChildWidget::render(rendercontext);
   }
+
+  ConnectionInfo getConnections() const override {
+    ConnectionInfo info;
+    for (const auto& child : base.children) {
+      if (child.widget) {
+        auto* mcw = dynamic_cast<const MultiChildWidget*>(child.widget.get());
+        if (mcw) {
+          info.addChildConnections(mcw->getConnections());
+        }
+      }
+    }
+    return info;
+  }
 };
