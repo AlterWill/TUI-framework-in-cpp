@@ -11,7 +11,6 @@
 
 #include "rendering/buffer.hpp"
 #include "terminal/backend.hpp"
-#include "terminal/tools.hpp"
 #include "utilities/unicode.hpp"
 
 class Surface {
@@ -51,7 +50,7 @@ class Surface {
       current.resize(terminalData.col, terminalData.row);
       previous.resize(terminalData.col, terminalData.row);
 
-      tools::clearScreen();
+      terminalData.clearScreen();
 
       std::fill(
           previous.cells.begin(),
@@ -196,11 +195,13 @@ class Surface {
     std::vector<std::string> sgr;
 
     for (int styleBit = 0; styleBit < 8; styleBit++) {
-      if ((current.cells[index].style.textStyle &
-           (1 << styleBit)) != 0) {
-
+      if ((current.cells[index].style.textStyle & (1 << styleBit)) != 0) {
         needReset = true;
-        sgr.push_back(std::to_string(styleBit + 1));
+        int sgrCode = styleBit + 1;
+        if (styleBit >= 5) {
+          sgrCode += 1;  // 5 -> 7 (Reverse), 6 -> 8 (Hidden), 7 -> 9 (StrikeThrough)
+        }
+        sgr.push_back(std::to_string(sgrCode));
       }
     }
 
