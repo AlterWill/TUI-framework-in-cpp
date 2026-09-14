@@ -9,6 +9,7 @@
 #include <string>
 
 #include "terminal/backend.hpp"
+#include "terminal/ansi.hpp"
 
 class linux_backend : public backend {
   winsize w;
@@ -40,9 +41,12 @@ class linux_backend : public backend {
       write(STDOUT_FILENO, "\x1b[?1002h", 8);  // Drag events
       write(STDOUT_FILENO, "\x1b[?1006h", 8);  // SGR encoding
     }
+
+    ansi::hideCursor();
   }
 
   ~linux_backend() override {
+    ansi::showCursor();
     if (keyboardSupport) {
       tcsetattr(STDIN_FILENO, TCSAFLUSH, &original);
     }
@@ -166,8 +170,9 @@ class linux_backend : public backend {
       if (std::sscanf(seq.c_str(), "[<%d;%d;%d%c", &code, &x, &y, &end) == 4) {
         MouseEvent mouse{};
 
-        mouse.x = static_cast<std::size_t>(x);
-        mouse.y = static_cast<std::size_t>(y);
+        // SGR reports coordinates 1-based, but the widget tree uses 0-based rects.
+        mouse.x = x > 0 ? static_cast<std::size_t>(x - 1) : 0;
+        mouse.y = y > 0 ? static_cast<std::size_t>(y - 1) : 0;
 
         if (code & 64) {
           mouse.button = MouseButton::None;
@@ -245,6 +250,11 @@ class linux_backend : public backend {
         return keyEvent{.key = HOME_KEY};
       case 'F':
         return keyEvent{.key = END_KEY};
+      case 'Z': {
+        keyEvent ev{.key = '\t'};
+        ev.mods.setShift(true);
+        return ev;
+      }
     }
 
     return keyEvent{.key = '\x1b'};

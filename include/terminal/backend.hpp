@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <iostream>
 #include <optional>
 #include "input/event.hpp"
+#include "terminal/ansi.hpp"
 
 class backend {
  public:
@@ -12,6 +14,10 @@ class backend {
   bool supports256Color{false};
 
   virtual ~backend() = default;
+
+  inline void clearScreen()          { std::cout << "\x1b" << "[2J"; }
+  inline void enterAlternateScreenBuffer(){ std::cout << "\x1b" << "[?1049h"; }
+  inline void leaveAlternateScreenBuffer(){ std::cout << "\x1b[?1049l" << std::flush; }
 
   virtual void findTerminalSize() = 0;
   virtual void findSupportsTrueAnd256Colour() = 0;
