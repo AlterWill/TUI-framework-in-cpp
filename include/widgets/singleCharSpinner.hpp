@@ -74,7 +74,9 @@ struct singleCharSpinner : animatebleWidget {
       return;
     }
 
-    rendercontext.setCell(padding.getLeft(), padding.getTop(), Cell{getFrame(), style});
+    rendercontext.setCell(rendercontext.getRect().getX() + padding.getLeft(),
+                          rendercontext.getRect().getY() + padding.getTop(),
+                          Cell{getFrame(), style});
   };
 
   void layout(const Rect&) override {}
