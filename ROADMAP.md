@@ -16,7 +16,7 @@ The foundation of the framework.
 * [x] Widget tree (`WidgetTree`)
 * [x] Single-child widgets (`SingleChildWidget` with generic child render)
 * [x] Multi-child widgets (`MultiChildWidget` with generic child render)
-* [x] Layout pass (`measure()` $\to$ `layout()` / `setRectForChildren()`)
+* [x] Layout pass (`measure()` → `layout()` / `setRectForChildren()`)
 * [x] Render pass (`render(RenderContext&)` delegating to child buffers)
 * [x] Framebuffer (`Surface` + `Buffer`)
 * [x] UTF-8 rendering & display width calculations
@@ -30,11 +30,12 @@ The foundation of the framework.
 * [x] Margin support
 * [x] Padding support
 
-## Phase 2 — Rendering Engine 🚧
+## Phase 2 — Rendering Engine ✅
 
 Improve how frames are produced and displayed.
 
 * [x] ANSI style output
+* [x] Centralized ANSI escape helpers (`ansi` namespace in `terminal/ansi.hpp`)
 * [x] Incremental rendering (cell-diff via `incrementDisplay()`)
 * [x] Dirty cell tracking
 * [x] Double buffering (`Surface` holds `current` and `previous` buffers)
@@ -110,27 +111,27 @@ Everything related to user input and events.
 
 *Goal: A practical standard library of common TUI controls.*
 
-## Phase 5 — Basic Widgets
+## Phase 5 — Basic Widgets ✅
 
 * [x] Divider (preset glyphs via `dividerStyle` namespace)
 * [x] Spacer
-* [x] Spinner
-* [x] Progress bar
+* [x] Spinner (`SingleCharSpinner` with `singleSpinnerStyle` frame presets)
+* [x] Progress bar (`ProgressBar` with `progressBarStyles` presets)
 
-## Phase 6 — Interactive Widgets
+## Phase 6 — Interactive Widgets ✅
 
 * [x] Button
-* [x] Checkbox
-* [x] Radio button
+* [x] Checkbox (with `checkboxStyle` glyph presets)
+* [x] Radio button (`RadioGroup`)
 * [x] Toggle switch
-* [x] Slider
+* [x] Slider (read-only `Slider` + interactive `InteractiveSlider` with `sliderStyle`)
 
-## Phase 7 — Input Widgets
+## Phase 7 — Input Widgets ✅
 
-* [ ] Text input
-* [ ] Password input
-* [ ] Text area
-* [ ] Number input
+* [x] Text input (`TextInput` — single-line with placeholder, masking, cursor shapes, validation)
+* [x] Password input (`TextInput::withMask()` — mask character support)
+* [x] Text area (`TextArea` factory — multiline `TextInput`)
+* [x] Number input (`TextInput` + `filters::digits()` / `validators::number()`)
 
 ## Phase 8 — Advanced Widgets
 
@@ -158,6 +159,9 @@ Everything related to user input and events.
 
 * [x] Dirty widget measurement caching (`LayoutNode::dirty`)
 * [x] Diagnostic logger (`tui::Logger`, enabled via `-DENABLE_LOGGING`)
+* [x] Animation system (`animatableWidget` base + `AnimationManager` per-frame ticker)
+* [x] Gradient color helpers (`lerpColour`, `generateGradient` in `gradientColorHelper.hpp`)
+* [x] Reusable input validators & filters (`validators` / `filters` namespaces)
 * [ ] API documentation
 * [ ] Unit tests
 * [ ] Benchmarks
