@@ -96,7 +96,7 @@ struct toggle : Widget {
       }
     } else if (const auto* ke = std::get_if<keyEvent>(&event)) {
       int k = ke->getKey();
-      if ((k == '\n' || k == '\r' || k == ' ' || k == 'x' || k == 'X') && isFocused()) {
+      if ((k == '\n'  || k == ' ' ) && isFocused()) {
         flip();
         return true;
       }
