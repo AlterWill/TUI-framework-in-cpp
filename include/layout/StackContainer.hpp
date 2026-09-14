@@ -16,7 +16,7 @@ struct Stack : public MultiChildWidget {
   StackBase stackBase;
 
   bool transparent{false};
-  Colour backgroundColour;
+  Colour backgroundColour{NamedColour::Black};
 
   Stack() = default;
 
