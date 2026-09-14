@@ -21,35 +21,35 @@ inline constexpr checkboxData x{
 };
 
 // ─────────────────────────────────────────────
-// Light checkmark: [✓] / [ ]
+// Light checkmark: [✓] / [✗]
 // ─────────────────────────────────────────────
 
 inline constexpr checkboxData check{
     U'✓',
-    U' ',
     U'✗',
-    U' '
+    U'✓',
+    U'✗'
 };
 
 // ─────────────────────────────────────────────
-// Heavy checkmark: [✔] / [ ]
+// Heavy checkmark: [✔] / [✘]
 // ─────────────────────────────────────────────
 
 inline constexpr checkboxData heavyCheck{
     U'✔',
-    U' ',
     U'✘',
-    U' '
+    U'✔',
+    U'✘'
 };
 
 // ─────────────────────────────────────────────
-// Block: [█] / [ ]  (focus uses lighter shade)
+// Block: [█] / [░]
 // ─────────────────────────────────────────────
 
 inline constexpr checkboxData block{
     U'█',
-    U' ',
-    U'▓',
+    U'░',
+    U'█',
     U'░'
 };
 
@@ -60,8 +60,8 @@ inline constexpr checkboxData block{
 inline constexpr checkboxData square{
     U'■',
     U'□',
-    U'▪',
-    U'▫'
+    U'■',
+    U'□'
 };
 
 // ─────────────────────────────────────────────
@@ -72,18 +72,18 @@ inline constexpr checkboxData braille{
     U'⣿',
     U'⣀',
     U'⣿',
-    U'⠿'
+    U'⣀'
 };
 
 // ─────────────────────────────────────────────
-// Circle: [●] / [○]
+// Circle: (●) / (○)
 // ─────────────────────────────────────────────
 
 inline constexpr checkboxData circle{
     U'●',
     U'○',
-    U'◉',
-    U'◌'
+    U'●',
+    U'○'
 };
 
 }  // namespace checkboxStyle
