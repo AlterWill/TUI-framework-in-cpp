@@ -39,6 +39,13 @@ class Surface {
     std::fill(current.cells.begin(), current.cells.end(), Cell{});
   }
 
+  void fullRedraw() {
+    displayOutput.clear();
+    terminalData.clearScreen();
+    std::fill(previous.cells.begin(), previous.cells.end(), Cell{});
+    clear();
+  }
+
   void resizeBuffer() {
     displayOutput.clear();
 
