@@ -255,6 +255,13 @@ struct LinearLayoutSolver {
     std::size_t availableMain = maxAvailableMain > nonChildOverhead ? maxAvailableMain - nonChildOverhead : 0;
     std::size_t remainingSpace = availableMain;
 
+    // Re-arm dirty flag so every frame triggers a fresh measure pass.
+    // Without this, dirty stays false after first frame and resolveContent
+    // skips re-measuring children even when terminal constraints change.
+    for (auto& child : children) {
+      child.dirty = true;
+    }
+
     // Sizing Steps
     resolveFixed(children, axis, remainingSpace);
     resolvePercentage(children, axis, availableMain, remainingSpace);
