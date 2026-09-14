@@ -43,6 +43,7 @@ struct Widget {
   virtual void layout(const Rect&) {};
   virtual void render(RenderContext& rendercontext) = 0;
   virtual bool handleEvent(const Event&) { return false; }
+  virtual void onFocus() {}
 
   virtual ~Widget() = default;
 

@@ -51,6 +51,8 @@ struct Overlay : public Stack {
                        bool dismissOnClickOutside = true, std::function<void()> onDismiss = nullptr) {
     LayoutNode node;
     node.widget = std::move(w);
+    node.horizontalAlignment = HorizontalAlignment::Center;
+    node.verticalAlignment = VerticalAlignment::Center;
     base.children.push_back(std::move(node));
     overlayMeta.push_back({modal, dismissOnClickOutside, std::move(onDismiss)});
     return *this;
@@ -58,6 +60,8 @@ struct Overlay : public Stack {
 
   Overlay& addOverlay(LayoutNode node, bool modal = false,
                        bool dismissOnClickOutside = true, std::function<void()> onDismiss = nullptr) {
+    node.horizontalAlignment = HorizontalAlignment::Center;
+    node.verticalAlignment = VerticalAlignment::Center;
     base.children.push_back(std::move(node));
     overlayMeta.push_back({modal, dismissOnClickOutside, std::move(onDismiss)});
     return *this;
@@ -133,9 +137,15 @@ struct Overlay : public Stack {
     std::size_t usableH =
         rect.height > padding.vertical() ? rect.height - padding.vertical() : 0;
 
-    for (auto& child : base.children) {
-      std::size_t childW = child.measured.width;
-      std::size_t childH = child.measured.height;
+    // The base layer (index 0) stretches to fill the whole overlay area so the
+    // application underneath is interactive; floating overlays keep their
+    // measured (content) size so click-outside-to-dismiss actually works.
+    for (std::size_t i = 0; i < base.children.size(); ++i) {
+      auto& child = base.children[i];
+      std::size_t childW = (i == 0) ? usableW : child.measured.width;
+      std::size_t childH = (i == 0) ? usableH : child.measured.height;
+      childW = std::min(childW, usableW);
+      childH = std::min(childH, usableH);
 
       std::size_t childX = alignCoordinate(startX, usableW, childW,
                                            child.margin.left, child.margin.right,
@@ -166,15 +176,15 @@ struct Overlay : public Stack {
   }
 
   bool handleEvent(const Event& event) override {
-    if (auto mouse = std::get_if<MouseEvent>(&event)) {
-      // Find the topmost modal overlay and check for backdrop click
-      for (std::size_t i = 0; i < overlayMeta.size(); ++i) {
-        std::size_t metaIdx = overlayMeta.size() - 1 - i;
-        std::size_t childIdx = metaIdx + 1; // +1 because children[0] is base layer
+    // If a modal overlay is active, intercept events for it
+    for (std::size_t i = 0; i < overlayMeta.size(); ++i) {
+      std::size_t metaIdx = overlayMeta.size() - 1 - i;
+      std::size_t childIdx = metaIdx + 1;  // +1 because children[0] is base layer
 
-        if (childIdx >= base.children.size()) continue;
+      if (childIdx >= base.children.size()) continue;
 
-        if (overlayMeta[metaIdx].modal) {
+      if (overlayMeta[metaIdx].modal) {
+        if (const auto* mouse = std::get_if<MouseEvent>(&event)) {
           const Rect& modalRect = base.children[childIdx].rect;
 
           if (mouse->action == MouseAction::Press) {
@@ -189,18 +199,18 @@ struct Overlay : public Stack {
               return true;
             }
           }
-          break; // topmost modal blocks everything below
+        } else {
+          // Non-mouse events (e.g. keyboard) trapped inside modal
+          if (base.children[childIdx].widget) {
+            return base.children[childIdx].widget->handleEvent(event);
+          }
         }
-      }
-
-      // No modal blocking: forward to children top-to-bottom (reverse order)
-      for (auto it = base.children.rbegin(); it != base.children.rend(); ++it) {
-        if (it->widget && it->rect.contains(mouse->x, mouse->y)) {
-          if (it->widget->handleEvent(event)) return true;
-        }
+        return false;  // Topmost modal blocks everything below
       }
     }
-    return false;
+
+    // No modal blocking: standard container event dispatch
+    return MultiChildWidget::handleEvent(event);
   }
 
  private:

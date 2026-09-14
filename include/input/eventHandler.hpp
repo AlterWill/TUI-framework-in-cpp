@@ -33,6 +33,7 @@ class EventDispatcher {
 
     focusIndex = index % focusOrder.size();
     focusOrder[focusIndex]->setFocused(true);
+    focusOrder[focusIndex]->onFocus();
     hasFocus = true;
   }
 
@@ -57,7 +58,7 @@ class EventDispatcher {
   void nextFocus() {
     if (focusOrder.empty()) return;
     if (!hasFocus) {
-      setFocus(0);
+      setFocus(std::size_t{0});
     } else {
       setFocus((focusIndex + 1) % focusOrder.size());
     }
@@ -91,6 +92,12 @@ class EventDispatcher {
   bool dispatchEvent(const Event& event, WidgetTree& tree) {
     // 1. Keyboard event handling
     if (auto key = std::get_if<keyEvent>(&event)) {
+      // Escape clears focus so the user can get out of a focused input box
+      if (key->key == '\x1b') {
+        clearFocus();
+        return true;
+      }
+
       // Tab navigation
       if (key->key == '\t' || key->key == 9) {
         if (key->mods.getShift()) {
@@ -101,9 +108,9 @@ class EventDispatcher {
         return true;
       }
 
-      // Bubble from focused widget up parent chain
+      // Send to focused widget
       if (Widget* target = getFocusedWidget()) {
-        if (dispatchBubble(target, event)) {
+        if (target->handleEvent(event)) {
           return true;
         }
       }
@@ -115,19 +122,15 @@ class EventDispatcher {
       return false;
     }
 
-    // 2. Mouse click hit testing
+    // 2. Mouse event handling
     if (auto mouse = std::get_if<MouseEvent>(&event)) {
       if (mouse->action == MouseAction::Press && mouse->button == MouseButton::Left) {
         Widget* hit = findHit(tree.root, mouse->x, mouse->y);
-        if (hit) {
-          if (hit->isFocusable()) {
-            setFocus(hit);
-          }
-          return dispatchBubble(hit, event);
+        if (hit && hit->isFocusable()) {
+          setFocus(hit);
         }
       }
 
-      // Fallback for other mouse actions (scroll, move, drag) to tree root
       if (tree.root.widget && tree.root.widget->handleEvent(event)) {
         return true;
       }

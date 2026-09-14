@@ -19,6 +19,7 @@ struct SplitPane : public Widget {
   slider dividerSlider;
   bool dragging{false};
   Rect sliderRect{};
+  Rect paneRect{};
 
   SplitPane() = default;
 
@@ -74,6 +75,7 @@ struct SplitPane : public Widget {
     padding = p;
     return *this;
   }
+
 
   Size measure(const SizeConstraints& constraints) override {
     std::size_t padW = padding.horizontal();
@@ -134,6 +136,8 @@ struct SplitPane : public Widget {
 
     double ratio = std::clamp(dividerSlider.getValue(), dividerSlider.minValue, dividerSlider.maxValue);
 
+    paneRect = Rect{startX, startY, usableH, usableW};
+
     if (horizontal) {
       std::size_t splitSpace = usableW > 1 ? usableW - 1 : 0;
       std::size_t firstW = static_cast<std::size_t>(static_cast<double>(splitSpace) * ratio);
@@ -182,10 +186,8 @@ struct SplitPane : public Widget {
           return true;
         }
         if (mouse->action == MouseAction::Drag) {
-          Orientation sliderOrientation =
-              (orientation == Orientation::Horizontal) ? Orientation::Vertical : Orientation::Horizontal;
           dividerSlider.withValue(sliderValueFromMouse(
-              mouse->x, mouse->y, sliderRect, sliderOrientation,
+              mouse->x, mouse->y, paneRect, orientation,
               dividerSlider.minValue, dividerSlider.maxValue, 0, 0, 0, 0));
           return true;
         }
@@ -193,10 +195,8 @@ struct SplitPane : public Widget {
 
       if (mouse->action == MouseAction::Press && sliderRect.contains(mouse->x, mouse->y)) {
         dragging = true;
-        Orientation sliderOrientation =
-            (orientation == Orientation::Horizontal) ? Orientation::Vertical : Orientation::Horizontal;
         dividerSlider.withValue(sliderValueFromMouse(
-            mouse->x, mouse->y, sliderRect, sliderOrientation,
+            mouse->x, mouse->y, paneRect, orientation,
             dividerSlider.minValue, dividerSlider.maxValue, 0, 0, 0, 0));
         return true;
       }
@@ -220,7 +220,7 @@ struct SplitPane : public Widget {
         (orientation == Orientation::Horizontal) ? Orientation::Vertical : Orientation::Horizontal;
 
     if (sliderOrientation == Orientation::Horizontal) {
-      if (rect.width < 3 || rect.height < 1) return;
+      if (rect.width < 1 || rect.height < 1) return;
 
       std::size_t trackLen = rect.width;
       std::size_t thumbPos = static_cast<std::size_t>(norm * static_cast<double>(trackLen - 1));
@@ -231,10 +231,12 @@ struct SplitPane : public Widget {
         rendercontext.setCell(rect.x + i, thumbY, cell);
       }
 
-      Cell thumb{dividerSlider.style.thumb, dividerSlider.thumbStyle};
-      rendercontext.setCell(rect.x + thumbPos, thumbY, thumb);
+      if (dividerSlider.style.thumb != dividerSlider.style.track) {
+        Cell thumb{dividerSlider.style.thumb, dividerSlider.thumbStyle};
+        rendercontext.setCell(rect.x + thumbPos, thumbY, thumb);
+      }
     } else {
-      if (rect.height < 3 || rect.width < 1) return;
+      if (rect.height < 1 || rect.width < 1) return;
 
       std::size_t trackLen = rect.height;
       std::size_t thumbPos = static_cast<std::size_t>(norm * static_cast<double>(trackLen - 1));
@@ -245,8 +247,10 @@ struct SplitPane : public Widget {
         rendercontext.setCell(thumbX, rect.y + i, cell);
       }
 
-      Cell thumb{dividerSlider.style.thumb, dividerSlider.thumbStyle};
-      rendercontext.setCell(thumbX, rect.y + thumbPos, thumb);
+      if (dividerSlider.style.thumb != dividerSlider.style.track) {
+        Cell thumb{dividerSlider.style.thumb, dividerSlider.thumbStyle};
+        rendercontext.setCell(thumbX, rect.y + thumbPos, thumb);
+      }
     }
   }
 };

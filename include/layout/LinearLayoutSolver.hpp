@@ -218,7 +218,7 @@ struct LinearLayoutSolver {
         child.dirty = false;
       }
 
-      // Enforce explicit cross-axis SizeSpec (Fixed / Percentage) when provided
+      // Enforce explicit cross-axis SizeSpec (Fixed / Percentage / Flex) when provided
       SizeType crossType = getCrossType(child, axis);
       if (crossType == SizeType::Fixed) {
         setCrossMeasured(child, axis, getCrossSpec(child, axis));
@@ -226,6 +226,8 @@ struct LinearLayoutSolver {
         double pct = std::clamp(static_cast<double>(getCrossSpec(child, axis)), 0.0, 100.0);
         std::size_t pctVal = static_cast<std::size_t>(static_cast<double>(usableCrossMax) * pct / 100.0);
         setCrossMeasured(child, axis, pctVal);
+      } else if (crossType == SizeType::Flex) {
+        setCrossMeasured(child, axis, usableCrossMax);
       }
 
       std::size_t childCross = (axis == Axis::Horizontal) ? child.measured.height : child.measured.width;
