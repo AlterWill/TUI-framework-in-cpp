@@ -54,6 +54,7 @@ struct Column : public MultiChildWidget {
     std::size_t currentY = rect.y + padding.top;
     std::size_t usableWidth =
         rect.width > padding.horizontal() ? rect.width - padding.horizontal() : 0;
+    std::size_t maxY = rect.y + rect.height - padding.bottom;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;
@@ -63,7 +64,13 @@ struct Column : public MultiChildWidget {
                                            child.margin.left, child.margin.right,
                                            child.horizontalAlignment);
 
-      child.rect = Rect{childX, currentY + child.margin.top, childH, childW};
+      std::size_t startChildY = currentY + child.margin.top;
+      std::size_t clampedH = 0;
+      if (startChildY < maxY) {
+        clampedH = std::min(childH, maxY - startChildY);
+      }
+
+      child.rect = Rect{childX, startChildY, clampedH, std::min(childW, usableWidth)};
       currentY += childH + child.margin.vertical() + base.gap;
     }
   }

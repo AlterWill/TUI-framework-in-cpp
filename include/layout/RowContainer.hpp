@@ -53,6 +53,7 @@ struct Row : public MultiChildWidget {
     std::size_t startY = rect.y + padding.top;
     std::size_t usableHeight =
         rect.height > padding.vertical() ? rect.height - padding.vertical() : 0;
+    std::size_t maxX = rect.x + rect.width - padding.right;
 
     for (auto& child : base.children) {
       std::size_t childW = child.measured.width;
@@ -62,7 +63,13 @@ struct Row : public MultiChildWidget {
                                            child.margin.top, child.margin.bottom,
                                            child.verticalAlignment);
 
-      child.rect = Rect{currentX + child.margin.left, childY, childH, childW};
+      std::size_t startChildX = currentX + child.margin.left;
+      std::size_t clampedW = 0;
+      if (startChildX < maxX) {
+        clampedW = std::min(childW, maxX - startChildX);
+      }
+
+      child.rect = Rect{startChildX, childY, std::min(childH, usableHeight), clampedW};
       currentX += childW + child.margin.horizontal() + base.gap;
     }
   }
